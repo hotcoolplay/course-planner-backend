@@ -1,0 +1,44 @@
+{
+  "name": "courseplanner-backend",
+  "packageManager": "yarn@4.1.1",
+  "dependencies": {
+    "-": "^0.0.1",
+    "@fastify/env": "^4.3.0",
+    "@fastify/postgres": "^5.2.2",
+    "@fastify/type-provider-typebox": "^4.0.0",
+    "@sinclair/typebox": "^0.32.20",
+    "axios": "^1.6.8",
+    "dev": "^0.1.3",
+    "dotenv": "^16.4.5",
+    "fastify": "^4.26.2",
+    "fastify-cli": "^6.1.1",
+    "fastify-plugin": "^4.5.1",
+    "got": "^14.2.1",
+    "nodemon": "^3.1.0",
+    "pg": "^8.11.5"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.0.2",
+    "@eslint/js": "^9.0.0",
+    "@tsconfig/node20": "^20.1.4",
+    "@tsconfig/recommended": "^1.0.6",
+    "@types/node": "^20.12.5",
+    "@types/pg": "^8.11.5",
+    "@typescript-eslint/eslint-plugin": "^6.4.0",
+    "@yarnpkg/pnpify": "^4.0.1",
+    "eslint": "^8.0.1",
+    "eslint-config-standard-with-typescript": "^43.0.1",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-n": "^15.0.0 || ^16.0.0 ",
+    "eslint-plugin-promise": "^6.0.0",
+    "globals": "^15.0.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.4",
+    "typescript-eslint": "^7.5.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "nodemon --env-file=.env build/app.js",
+    "start": "node --env-file=.env src/app.js"
+  }
+}
