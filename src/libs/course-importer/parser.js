@@ -1,26 +1,34 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const insertdb_1 = __importDefault(require("./insertdb"));
-function parseCourses(fastify, data) {
-    return __awaiter(this, void 0, void 0, function* () {
+const insertdb_1 = require("./insertdb");
+const axios_1 = __importDefault(require("axios"));
+const fastify_plugin_1 = __importDefault(require("fastify-plugin"));
+const options = {
+    method: 'GET',
+    url: 'https://openapi.data.uwaterloo.ca/v3/courses/1239',
+    headers: {
+        'x-api-key': process.env.UW_API_KEY_V3
+    }
+};
+async function parseCourses(fastify) {
+    console.log('Calling API...');
+    await axios_1.default.request(options).then(async function ({ data }) {
+        const courses = data.length;
+        let updatedCourses = 0;
         for (let i = 0; i < data.length; ++i) {
             const course = data[i];
             if (course.associatedAcademicCareer === 'UG') {
-                yield (0, insertdb_1.default)(fastify, course);
+                console.log(course.subjectCode + course.catalogNumber);
+                updatedCourses += await (0, insertdb_1.insertCourses)(fastify, course);
             }
         }
+        return `${updatedCourses} out of ${courses} successfully updated.`;
+    }).catch(function (error) {
+        console.error(error);
+        return 'Couldn\'t fetch course data. Try again later?';
     });
 }
 /* Potentially implement at a later time
@@ -97,4 +105,4 @@ function checkHelper(check: string) {
                     }
         }
 }*/
-exports.default = parseCourses;
+exports.default = (0, fastify_plugin_1.default)(parseCourses);

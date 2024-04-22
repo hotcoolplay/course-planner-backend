@@ -1,4 +1,4 @@
-import fastify, { FastifyInstance } from 'fastify'
+import { FastifyInstance } from 'fastify'
 import fp from 'fastify-plugin'
 const fe = require('@fastify/env')
 

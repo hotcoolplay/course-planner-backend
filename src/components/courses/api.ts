@@ -14,7 +14,7 @@ async function courseRoute (fastify: FastifyWithTypeProvider) {
             },
         },
         handler: async (req, res) => {
-            const result = await domain.getCourseList()
+            const result = await domain.getCourseList(fastify)
             if (!result) {
                 res.status(404)
                 return
@@ -33,7 +33,7 @@ async function courseRoute (fastify: FastifyWithTypeProvider) {
             })
         },
         handler: async (req, res) => {
-            const result = await domain.getCourse(req.params.id)
+            const result = await domain.getCourse(fastify, req.params.id)
             if (!result) {
                 res.status(404)
                 return

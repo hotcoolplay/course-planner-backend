@@ -1,24 +1,47 @@
-import { Response } from './client';
 import { insertCourses } from './insertdb';
-import { FastifyInstance } from 'fastify' 
 import axios from 'axios'
+import fp from 'fastify-plugin'
+import { FastifyInstance } from 'fastify'
 
+export interface Response {
+    courseId: string,
+    courseOfferNumber: number,
+    termCode: string,
+    termName: string, 
+    associatedAcademicCareer: string,
+    associatedAcademicGroupCode: string,
+    associatedAcademicOrgCode: string,
+    subjectCode: string,
+    catalogNumber: string,
+    title: string,
+    descriptionAbbreviated: string,
+    description: string,
+    gradingBasis: string,
+    courseComponentCode: string,
+    enrollConsentCode: string,
+    enrollConsentDescription: string,
+    dropConsentCode: string,
+    dropConsentDescription: string,
+    requirementsDescription: string
+}
 const options = {
     method: 'GET',
-    url: 'https://openapi.data.uwaterloo.ca/v3/courses/1241',
+    url: 'https://openapi.data.uwaterloo.ca/v3/courses/1239',
     headers: {
         'x-api-key': process.env.UW_API_KEY_V3
     }
 }
 
-async function parseCourses() {
+async function parseCourses(fastify: FastifyInstance) {
+    console.log('Calling API...')
     await axios.request(options).then(async function ({data}: {data: Response[]}) {
         const courses = data.length;
         let updatedCourses = 0;
         for (let i = 0; i < data.length; ++i) {
             const course = data[i];
             if (course.associatedAcademicCareer === 'UG') {
-                updatedCourses += await insertCourses(course)
+                console.log(course.subjectCode + course.catalogNumber)
+                updatedCourses += await insertCourses(fastify, course)
             }
         }
         return `${updatedCourses} out of ${courses} successfully updated.`
@@ -27,6 +50,7 @@ async function parseCourses() {
         return 'Couldn\'t fetch course data. Try again later?';
     });
 }
+
 /* Potentially implement at a later time
 function checkEligibility(reqs: string): boolean {
     const prereqs: string[] = reqs.includes('Prereq: ') ?
@@ -101,4 +125,4 @@ function checkHelper(check: string) {
                     }
         }
 }*/
-export default parseCourses;
+export default fp(parseCourses);
