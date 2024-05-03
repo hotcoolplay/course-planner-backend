@@ -1,12 +1,10 @@
-import { FastifyInstance, FastifyBaseLogger } from 'fastify'
-import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { Type } from '@sinclair/typebox';
 import { courseListSchema, courseSchema } from './course-schema';
-import { IncomingMessage, Server, ServerResponse } from 'node:http';
 import * as domain from './domain'
+import { FastifyWithTypeProvider } from '../../index'
 
 async function courseRoute (fastify: FastifyWithTypeProvider) {
-    fastify.get('/courses', {
+    fastify.get('/courselist', {
         schema: {
             response: {
                 200: courseListSchema,
@@ -22,7 +20,7 @@ async function courseRoute (fastify: FastifyWithTypeProvider) {
             res.send(result)
         }
     })
-    fastify.get('/course/:id', {
+    fastify.get('/courses/course/:id', {
         schema: {
             response: {
                 200: courseSchema,
@@ -41,16 +39,28 @@ async function courseRoute (fastify: FastifyWithTypeProvider) {
             res.send(result)
         }
     })
+    fastify.get('/courses/term/:term', {
+        schema: {
+            response: {
+                200: courseListSchema,
+                ...commonHTTPResponses,
+            },
+            params: Type.Object({
+                term: Type.String(),
+            }),
+        },
+        handler: async (req, res) => {
+            const result = await domain.getCoursesByTerm(fastify, req.params.term)
+            if (!result) {
+                res.status(404)
+                return
+            }
+            res.send(result)
+        }
+    })
 }
 
 export default courseRoute;
-export type FastifyWithTypeProvider = FastifyInstance<
-  Server<typeof IncomingMessage, typeof ServerResponse>,
-  IncomingMessage,
-  ServerResponse<IncomingMessage>,
-  FastifyBaseLogger,
-  TypeBoxTypeProvider
->;
 const commonHTTPResponses = {
     400: {
       description: 'Bad request, please check your request body',

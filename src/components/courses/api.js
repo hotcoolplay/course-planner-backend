@@ -27,7 +27,7 @@ const typebox_1 = require("@sinclair/typebox");
 const course_schema_1 = require("./course-schema");
 const domain = __importStar(require("./domain"));
 async function courseRoute(fastify) {
-    fastify.get('/courses', {
+    fastify.get('/courselist', {
         schema: {
             response: Object.assign({ 200: course_schema_1.courseListSchema }, commonHTTPResponses),
         },
@@ -40,7 +40,7 @@ async function courseRoute(fastify) {
             res.send(result);
         }
     });
-    fastify.get('/course/:id', {
+    fastify.get('/courses/course/:id', {
         schema: {
             response: Object.assign({ 200: course_schema_1.courseSchema }, commonHTTPResponses),
             params: typebox_1.Type.Object({
@@ -49,6 +49,22 @@ async function courseRoute(fastify) {
         },
         handler: async (req, res) => {
             const result = await domain.getCourse(fastify, req.params.id);
+            if (!result) {
+                res.status(404);
+                return;
+            }
+            res.send(result);
+        }
+    });
+    fastify.get('/courses/term/:term', {
+        schema: {
+            response: Object.assign({ 200: course_schema_1.courseListSchema }, commonHTTPResponses),
+            params: typebox_1.Type.Object({
+                term: typebox_1.Type.String(),
+            }),
+        },
+        handler: async (req, res) => {
+            const result = await domain.getCoursesByTerm(fastify, req.params.term);
             if (!result) {
                 res.status(404);
                 return;

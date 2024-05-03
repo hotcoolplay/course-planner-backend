@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const fastify_plugin_1 = __importDefault(require("fastify-plugin"));
-const fe = require('@fastify/env');
+const env_1 = __importDefault(require("@fastify/env"));
 const uwapischema = {
     type: 'object',
     required: ['UW_API_KEY_V3'],
@@ -42,7 +42,7 @@ const uwapioptions = {
     dotenv: true
 };
 async function envConnector(fastify) {
-    fastify.register(fe, dboptions);
-    fastify.register(fe, uwapioptions);
+    fastify.register(env_1.default, dboptions);
+    fastify.register(env_1.default, uwapioptions);
 }
 exports.default = (0, fastify_plugin_1.default)(envConnector);

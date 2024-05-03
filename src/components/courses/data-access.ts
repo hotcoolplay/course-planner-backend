@@ -1,16 +1,17 @@
-import { FastifyInstance } from 'fastify'
-type course = {
-    subject: string,
-    code: string,
-    id: string
+import { FastifyWithTypeProvider, Term, Course } from '../../index'
+
+export async function getCourses(fastify: FastifyWithTypeProvider) {
+    const gotList = await fastify.pg.query<Course>('SELECT subject AS subjectcode, catalognumber, courseid FROM courses')
+    return gotList.rows
 }
 
-export async function getCourses(fastify: any): Promise<course[] | null> {
-    const gotList = await fastify.pg.query('SELECT * FROM courses')
-    return gotList
+export async function fetchCourse(fastify: FastifyWithTypeProvider, courseid: string) {
+    const gotCourse = await fastify.pg.query<Course>('SELECT subject AS subjectcode, catalognumber, courseid FROM courses WHERE courseid = $1', [courseid])
+    return gotCourse.rows[0]
 }
 
-export async function fetchCourse(fastify: any, courseid: string): Promise<course | null> {
-    const gotCourse = await fastify.pg.query('SELECT * FROM courses WHERE courseid = $1', [courseid])
-    return gotCourse
+export async function fetchCourseByTerm(fastify: FastifyWithTypeProvider, term: string): Promise<{ courseid: string}[]> {
+    const query = `SELECT courseid FROM ${term}`
+    const gotCourseList = await fastify.pg.query<{ courseid: string }>(query)
+    return gotCourseList.rows
 }

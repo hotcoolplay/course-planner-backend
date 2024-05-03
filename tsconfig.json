@@ -1,4 +1,4 @@
-{ "extends": "@tsconfig/node10/tsconfig.json",
+{ "extends":  "@tsconfig/node10/tsconfig.json",
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig to read more about this file */
 

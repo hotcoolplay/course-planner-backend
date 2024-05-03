@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import fp from 'fastify-plugin'
-const fe = require('@fastify/env')
+import fe from '@fastify/env'
 
 const uwapischema = {
     type: 'object',

@@ -12,9 +12,11 @@
     "fastify": "^4.26.2",
     "fastify-cli": "^6.1.1",
     "fastify-plugin": "^4.5.1",
+    "json-schema-to-ts": "^3.0.1",
     "node-schedule": "^2.1.1",
     "nodemon": "^3.1.0",
-    "pg": "^8.11.5"
+    "pg": "^8.11.5",
+    "tsd": "^0.31.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.0.2",
