@@ -1,11 +1,11 @@
 import { FastifyWithTypeProvider, Term, Course } from '../../index'
 
-export async function getCourses(fastify: FastifyWithTypeProvider) {
+export async function getCourses(fastify: FastifyWithTypeProvider): Promise<Course[]> {
     const gotList = await fastify.pg.query<Course>('SELECT subject AS subjectcode, catalognumber, courseid FROM courses')
     return gotList.rows
 }
 
-export async function fetchCourse(fastify: FastifyWithTypeProvider, courseid: string) {
+export async function fetchCourse(fastify: FastifyWithTypeProvider, courseid: string): Promise<Course> {
     const gotCourse = await fastify.pg.query<Course>('SELECT subject AS subjectcode, catalognumber, courseid FROM courses WHERE courseid = $1', [courseid])
     return gotCourse.rows[0]
 }

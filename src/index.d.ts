@@ -11,9 +11,9 @@ export type FastifyWithTypeProvider = FastifyInstance<
 >;
 
 export interface Course {
-    courseid: string,
     subjectcode: string,
-    catalognumber: string
+    catalognumber: string,
+    courseid: string
 }
 
 export interface Term {
