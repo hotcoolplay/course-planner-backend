@@ -10,6 +10,19 @@ server.register(require('./libs/setup/envs'))
           server.register(courseRoute)
 })
 
+server.addHook('preHandler', (req: any, res: any, done: any) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET");
+  res.header("Access-Control-Allow-Headers",  "*");
+
+  const isPreflight = /options/i.test(req.method);
+  if (isPreflight) {
+    return res.send();
+  }
+      
+  done();
+})
+
 server.listen({ port: process.env.PORT }, (err: any, address: string) => {
   if (err) {
     console.error(err)

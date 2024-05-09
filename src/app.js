@@ -13,6 +13,16 @@ server.register(require('./libs/setup/envs'))
     server.register(require('./libs/setup/db'));
     server.register(api_1.default);
 });
+server.addHook('preHandler', (req, res, done) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "GET");
+    res.header("Access-Control-Allow-Headers", "*");
+    const isPreflight = /options/i.test(req.method);
+    if (isPreflight) {
+        return res.send();
+    }
+    done();
+});
 server.listen({ port: process.env.PORT }, (err, address) => {
     if (err) {
         console.error(err);
