@@ -41,15 +41,13 @@ async function requestCourses(fastify) {
     await axios_1.default.request(options).then(async function ({ data }) {
         let updatedCourses = 0;
         for (let i = 0; i < data.length; ++i) {
-            if (data[i].associatedAcademicCareer === 'UG') {
-                const course = { courseid: data[i].courseId,
-                    subjectcode: data[i].subjectCode,
-                    catalognumber: data[i].catalogNumber
-                    //requirementsDescription: data[i].requirementsDescription
-                };
-                await db.insertCourses(fastify, course);
-                console.log(course.subjectcode + course.catalognumber);
-            }
+            const course = { courseid: data[i].courseId,
+                subjectcode: data[i].subjectCode,
+                catalognumber: data[i].catalogNumber
+                //requirementsDescription: data[i].requirementsDescription
+            };
+            await db.insertCourses(fastify, course);
+            console.log(course.subjectcode + course.catalognumber);
         }
         return `${updatedCourses} out of ${data.length} successfully updated.`;
     }).catch(function (error) {
