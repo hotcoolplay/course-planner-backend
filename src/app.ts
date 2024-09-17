@@ -1,5 +1,8 @@
-import courseRoute from './components/courses/api'
-import { requestCourses, requestTerms, requestTermCourseList } from './libs/course-importer/parser'
+import courseRoute from './components/courses/api.js'
+import { requestCourses, requestTerms, requestTermCourseList, 
+  requestPrograms, requestDegrees } from './libs/data-importer/requestData.js'
+
+export let prerequisiteTexts = new Set(['This is a test'])
 
 const server = require('fastify')({logger: true})
 
@@ -30,9 +33,11 @@ server.listen({ port: process.env.PORT }, (err: any, address: string) => {
   }
   console.log(`Server listening at ${address}`)
   const schedule = require('node-schedule')
-  schedule.scheduleJob('00 * * * *', async function(){
-    await requestCourses(server);
-    await requestTerms(server);
-    await requestTermCourseList(server);
-  });
+  //schedule.scheduleJob('00 00 00 * *', async function(){
+    //requestDegrees(server)
+    requestPrograms(server)
+    //requestCourses(server);
+    //requestTerms(server);
+    //requestTermCourseList(server);
+  //});
 })

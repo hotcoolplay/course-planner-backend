@@ -1,7 +1,9 @@
 import { Type } from '@sinclair/typebox';
-import { courseListSchema, courseSchema } from './course-schema';
-import * as domain from './domain'
-import { FastifyWithTypeProvider } from '../../index'
+import { courseListSchema, courseSchema } from './course-schema.js';
+import * as domain from './domain.js'
+import { FastifyInstance, FastifyBaseLogger } from 'fastify'
+import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
+import { IncomingMessage, Server, ServerResponse } from 'node:http';
 
 async function courseRoute (fastify: FastifyWithTypeProvider) {
     fastify.get('/courselist', {
@@ -71,3 +73,11 @@ const commonHTTPResponses = {
       type: 'null',
     },
   };
+
+export type FastifyWithTypeProvider = FastifyInstance<
+  Server<typeof IncomingMessage, typeof ServerResponse>,
+  IncomingMessage,
+  ServerResponse<IncomingMessage>,
+  FastifyBaseLogger,
+  TypeBoxTypeProvider
+>;

@@ -24,7 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getCoursesByTerm = exports.getCourse = exports.getCourseList = void 0;
-const db = __importStar(require("./data-access"));
+const db = __importStar(require("./data-access.js"));
 async function getCourseList(fastify) {
     const response = await db.getCourses(fastify);
     return response;
@@ -41,8 +41,11 @@ async function getCoursesByTerm(fastify, term) {
     const response = [];
     for (let i = 0; i < courseList.length; ++i) {
         const course = await db.fetchCourse(fastify, courseList[i].courseid);
-        if (course != undefined)
-            response.push(course);
+        if (course != undefined) {
+            for (let j = 0; j < course.length; ++j) {
+                response.push(course[j]);
+            }
+        }
     }
     return response;
 }

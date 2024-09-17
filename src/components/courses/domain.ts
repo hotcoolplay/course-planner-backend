@@ -1,5 +1,5 @@
-import * as db from './data-access'
-import { FastifyWithTypeProvider, Course } from '../../index'
+import * as db from './data-access.js'
+import { FastifyWithTypeProvider } from './api'
 
 export async function getCourseList(fastify: FastifyWithTypeProvider) {
     const response = await db.getCourses(fastify)
@@ -17,7 +17,11 @@ export async function getCoursesByTerm(fastify: FastifyWithTypeProvider, term: s
     const response: Course[] = []
     for (let i = 0; i < courseList.length; ++i) {
         const course = await db.fetchCourse(fastify, courseList[i].courseid)
-        if (course != undefined) response.push(course)
+        if (course != undefined) {
+            for (let j = 0; j < course.length; ++j) {
+                response.push(course[j])
+            }
+        }
     }
     return response
 }
