@@ -1,35 +1,10 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const typebox_1 = require("@sinclair/typebox");
-const course_schema_js_1 = require("./course-schema.js");
-const domain = __importStar(require("./domain.js"));
+import { Type } from "@sinclair/typebox";
+import { courseListSchema, courseSchema } from "./course-schema.js";
+import * as domain from "./domain.js";
 async function courseRoute(fastify) {
-    fastify.get('/courselist', {
+    fastify.get("/courselist", {
         schema: {
-            response: Object.assign({ 200: course_schema_js_1.courseListSchema }, commonHTTPResponses),
+            response: Object.assign({ 200: courseListSchema }, commonHTTPResponses),
         },
         handler: async (req, res) => {
             const result = await domain.getCourseList(fastify);
@@ -38,14 +13,14 @@ async function courseRoute(fastify) {
                 return;
             }
             res.send(result);
-        }
+        },
     });
-    fastify.get('/courses/course/:id', {
+    fastify.get("/courses/course/:id", {
         schema: {
-            response: Object.assign({ 200: course_schema_js_1.courseSchema }, commonHTTPResponses),
-            params: typebox_1.Type.Object({
-                id: typebox_1.Type.String()
-            })
+            response: Object.assign({ 200: courseSchema }, commonHTTPResponses),
+            params: Type.Object({
+                id: Type.String(),
+            }),
         },
         handler: async (req, res) => {
             const result = await domain.getCourse(fastify, req.params.id);
@@ -54,13 +29,13 @@ async function courseRoute(fastify) {
                 return;
             }
             res.send(result);
-        }
+        },
     });
-    fastify.get('/courses/term/:term', {
+    fastify.get("/courses/term/:term", {
         schema: {
-            response: Object.assign({ 200: course_schema_js_1.courseListSchema }, commonHTTPResponses),
-            params: typebox_1.Type.Object({
-                term: typebox_1.Type.String(),
+            response: Object.assign({ 200: courseListSchema }, commonHTTPResponses),
+            params: Type.Object({
+                term: Type.String(),
             }),
         },
         handler: async (req, res) => {
@@ -70,17 +45,17 @@ async function courseRoute(fastify) {
                 return;
             }
             res.send(result);
-        }
+        },
     });
 }
-exports.default = courseRoute;
+export default courseRoute;
 const commonHTTPResponses = {
     400: {
-        description: 'Bad request, please check your request body',
-        type: 'null',
+        description: "Bad request, please check your request body",
+        type: "null",
     },
     500: {
-        description: 'Internal server error, please try again later',
-        type: 'null',
+        description: "Internal server error, please try again later",
+        type: "null",
     },
 };

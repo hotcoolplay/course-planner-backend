@@ -1,12 +1,12 @@
-import { Type } from '@sinclair/typebox';
-import { courseListSchema, courseSchema } from './course-schema.js';
-import * as domain from './domain.js'
-import { FastifyInstance, FastifyBaseLogger } from 'fastify'
-import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
-import { IncomingMessage, Server, ServerResponse } from 'node:http';
+import { Type } from "@sinclair/typebox";
+import { courseListSchema, courseSchema } from "./course-schema.js";
+import * as domain from "./domain.js";
+import { FastifyInstance, FastifyBaseLogger } from "fastify";
+import { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
+import { IncomingMessage, Server, ServerResponse } from "node:http";
 
-async function courseRoute (fastify: FastifyWithTypeProvider) {
-    fastify.get('/courselist', {
+async function courseRoute(fastify: FastifyWithTypeProvider) {
+    fastify.get("/courselist", {
         schema: {
             response: {
                 200: courseListSchema,
@@ -14,34 +14,34 @@ async function courseRoute (fastify: FastifyWithTypeProvider) {
             },
         },
         handler: async (req, res) => {
-            const result = await domain.getCourseList(fastify)
+            const result = await domain.getCourseList(fastify);
             if (!result) {
-                res.status(404)
-                return
+                res.status(404);
+                return;
             }
-            res.send(result)
-        }
-    })
-    fastify.get('/courses/course/:id', {
+            res.send(result);
+        },
+    });
+    fastify.get("/courses/course/:id", {
         schema: {
             response: {
                 200: courseSchema,
                 ...commonHTTPResponses,
             },
             params: Type.Object({
-                id: Type.String()
-            })
+                id: Type.String(),
+            }),
         },
         handler: async (req, res) => {
-            const result = await domain.getCourse(fastify, req.params.id)
+            const result = await domain.getCourse(fastify, req.params.id);
             if (!result) {
-                res.status(404)
-                return
+                res.status(404);
+                return;
             }
-            res.send(result)
-        }
-    })
-    fastify.get('/courses/term/:term', {
+            res.send(result);
+        },
+    });
+    fastify.get("/courses/term/:term", {
         schema: {
             response: {
                 200: courseListSchema,
@@ -52,32 +52,35 @@ async function courseRoute (fastify: FastifyWithTypeProvider) {
             }),
         },
         handler: async (req, res) => {
-            const result = await domain.getCoursesByTerm(fastify, req.params.term)
+            const result = await domain.getCoursesByTerm(
+                fastify,
+                req.params.term,
+            );
             if (!result) {
-                res.status(404)
-                return
+                res.status(404);
+                return;
             }
-            res.send(result)
-        }
-    })
+            res.send(result);
+        },
+    });
 }
 
 export default courseRoute;
 const commonHTTPResponses = {
     400: {
-      description: 'Bad request, please check your request body',
-      type: 'null',
+        description: "Bad request, please check your request body",
+        type: "null",
     },
     500: {
-      description: 'Internal server error, please try again later',
-      type: 'null',
+        description: "Internal server error, please try again later",
+        type: "null",
     },
-  };
+};
 
 export type FastifyWithTypeProvider = FastifyInstance<
-  Server<typeof IncomingMessage, typeof ServerResponse>,
-  IncomingMessage,
-  ServerResponse<IncomingMessage>,
-  FastifyBaseLogger,
-  TypeBoxTypeProvider
+    Server<typeof IncomingMessage, typeof ServerResponse>,
+    IncomingMessage,
+    ServerResponse<IncomingMessage>,
+    FastifyBaseLogger,
+    TypeBoxTypeProvider
 >;

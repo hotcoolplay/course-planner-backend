@@ -1,4 +1,4 @@
-import { Type } from '@sinclair/typebox';
+import { Type } from "@sinclair/typebox";
 
 export const courseSchema = Type.Object({
     id: Type.Number(),
@@ -12,7 +12,7 @@ export const courseSchema = Type.Object({
     completions: Type.Number(),
     simulEnroll: Type.Boolean(),
     grading: Type.String(),
-    description: Type.String()
+    description: Type.String(),
 });
 
 export const courseListSchema = Type.Array(courseSchema);
