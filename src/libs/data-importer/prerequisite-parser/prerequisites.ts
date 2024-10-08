@@ -1,185 +1,855 @@
 import * as db from "./prerequisite-db.js";
 import { FastifyInstance } from "fastify";
+import * as util from "../scrapers/scraper-utilities.js";
+
+interface IPrerequisiteParserProperties {
+  parentPrerequisiteId: number | null,
+  coreqId: number | null, 
+  requisiteType: requisiteType | null
+}
 
 async function parsePrerequisite(
   fastify: FastifyInstance,
   requirement: string,
   requisiteType: requisiteType,
-  id: number,
-  coreqId: number,
-): Promise<(number | null)[]> {
+  parentPrerequisiteId: number,
+  parentCourseId: number,
+  coreqId: number | null,
+): Promise<IPrerequisiteParserProperties> {
+  // Typo cleanup
   requirement = requirement.replace(/MSC(?:i|I)/g, "MSCI");
   requirement = requirement.replace("BUS498KW", "BUS498W");
-  const prereq1 =
-    /^([A-Z]{2,6}\s?[0-9]{1,3}[A-Z]?) - .+ \([0-9].[0-9]{2}\)$/g.exec(
+  requirement = requirement.replace("cuncurrently", "concurrently");
+  requirement = requirement.replace("Hnours", "Honours");
+
+  const coursePrereq =
+    /^a<([A-Z]{2,6}\s?[0-9]{1,3}[A-Z]?)> - .+ \([0-9].[0-9]{2}\)$/g.exec(
       requirement,
     );
-  const prereq2 =
-    /^(?:Must have c|C)omplete(?:|d)(| or concurrently enrolled in)(?:| at least)(| [1-9]| one| all)(?:| of)(?:| the following)(?:| course):?\s*((?:(?:(?:[A-Z]{2,6}\s*[0-9]{1,3}[A-Z]?(?:(?: or |\/)[A-Z]{0,6}\s*[0-9]{3}K?[A-Z]?)*))*\s*(?:|\(Topic [0-9]*:?[^)]*|\(?(?:taken|prior to)[^)]*)\)?,?\s*)+)$/g.exec(
+  const parentPrereq =
+    /^(?:Must have c|C)omplete(?:|d)(| or concurrently enrolled in)(?:| at least)(| [1-9]| one| all)(?:| of)(?:| the following)(?:| course):?\s*$/g.exec(
       requirement,
     );
-  const prereq3 =
+  const pseudoCoursePrereq =
+    /^(?:Must have c|C)omplete(?:|d)(| or concurrently enrolled in)(?:| at least)(| [1-9]| one| all)(?:| of)(?:| the following)(?:| course):?\s*((?:(?:(?:[A-Z]{2,6}\s*[0-9]{1,3}[A-Z]?(?:(?: or |\/)[A-Z]{0,6}\s*[0-9]{3}K?[A-Z]?)*))*\s*(?:|\(Topic [0-9]*:?[^)]*|\(?(?:taken|prior to)[^)]*)\)?,?\s*)+).?$/g.exec(
+      requirement,
+    );
+  const parentAntireq =
+    /^\s*Not complete(?:|d)(?:| nor| or)(?:| concurrently| currently)(?:| enrolled)(?:| in)(?:| any of)(?:| the following):?\s*$/g.exec(
+      requirement,
+    );
+  const pseudoCourseAntireq =
     /^\s*Not complete(?:|d)(?:| nor| or)(?:| concurrently| currently)(?:| enrolled)(?:| in)(?:| any of)(?:| the following):?\s*((?:(?:(?:[A-Z]{2,6}\s*[0-9]{1,3}[A-Z]?(?:(?: or |\/)[A-Z]{0,6}\s*[0-9]{3}K?[A-Z]?)*))*\s*(?:|\(Topic [0-9]*:?[^)]*|\(?(?:taken|prior to)[^)]*)\)?,?\s*)+)$/g.exec(
       requirement,
     );
-  const prereq4 = /^Students must be in level ([1-9][AB])(| or higher)$/g.exec(
-    requirement,
-  );
-  const prereq5 =
+  const levelPrereq =
+    /^Students must be in level ([1-9][AB])(| or higher)$/g.exec(requirement);
+  const gradePrereq =
     /^Earned a minimum grade of ([0-9]{2})% in (each|at least [1-9]) of the following: $/g.exec(
       requirement,
     );
-  const prereq6 =
+  const unitPrereq =
     /^Earned (?:|at least )([0-9.]{1,4}) units from((?: [A-Z]{2,6},?(?:| or))+)( [0-9]{3} - [0-9]{3}| [0-9]{3}-level studio courses)*$/g.exec(
       requirement,
     );
-  const prereq7 =
-    /^(?:Must have e|E)arned a minimum \s*(?:|cumulative)\s*(|[A-Z]{2,6}|(?:[A-Z][a-z]+\s*)+)\s*(|major) average of ([0-9]{2})(?:|.0|.0%|.0%.)$/g.exec(
+  const cumulativeAveragePrereq =
+    /^(?:Must have e|E)arned a minimum cumulative average of ([0-9]{2})(?:|.0|.0%|.0%.)$/g.exec(
       requirement,
     );
-  const prereq8 =
+  const programAveragePrereq =
+    /^(?:Must have e|E)arned a minimum \s*(?:|cumulative)\s*(major|[A-Z]{2,6}|[A-Z]{2,6}\s*major|(?:[A-Z][a-z]+\s*)+|(?:[A-Z][a-z]+\s*)+\s*major)\s* average of ([0-9]{2})(?:|.0|.0%|.0%.)$/g.exec(
+      requirement,
+    );
+  const attachedCoreq =
     /^(?:See c|C)ore(?:|re)quisite(?:|s)(?:| \(see below\))$/g.exec(
       requirement,
     );
-  if (prereq1) {
-    const subject = /^[A-Z]{2,6}/.exec(prereq1[1])![0];
-    const catalog = /[0-9]{1,3}[A-Z]?$/.exec(prereq1[1])![0];
-    await db.insertPrerequisiteCourses(fastify, id, subject, catalog);
-    return [null, coreqId];
-  } else if (prereq2) {
-    if (prereq2[1] !== "") requisiteType = "coreq";
-    const amount =
-      prereq2[2] === "" || prereq2[2].trim() === "all"
-        ? 0
-        : prereq2[2] === " one"
-          ? 1
-          : Number(prereq2[2].trim());
-    const newId = await db.insertPrerequisites(fastify, {
-      ...nullPrerequisite,
-      amount: amount,
+  const programPrereq = /^Enrolled in ((?:(?:\s*or\s*|\s*)a<[^>]*>,?)+)$/g.exec(
+    requirement,
+  );
+  const programAntireq =
+    /^Not open to students enrolled in ((?:(?:\s*or\s*|\s*)a<[^>]*>,?)+)$/g.exec(
+      requirement,
+    );
+  // Couple edge cases is dealt w here:
+  // Honours Life Physics and "program offered by all faculties"
+  const pseudoProgramPrereq =
+    /^Enrolled in(?! a program offered by all| a Bachelor).*(?:Honours(?! Life Physics)|Facult|co-operative).*$/g.exec(
+      requirement,
+    );
+  const pseudoProgramAntireq =
+    /^Not open to students (?! a program offered by all).*(?:Honours(?! Life Physics)|Facult|co-operative).*$/g.exec(
+      requirement,
+    );
+  const degreePrereq =
+    /^Enrolled in\s*(?:a|)\s*((?:\s*or\s*|)BASc|Bachelor of .*?)\s*(?:program|)\s*(?:in the (Faculty of .*)|)$/g.exec(
+      requirement,
+    );
+  const degreeAntireq = /^Not open to students enrolled in (Bachelor of .*?)\s*(?:programs|)$/g.exec(requirement)
+  if (coursePrereq) {
+    const subject = /^[A-Z]{2,6}/.exec(coursePrereq[1])![0];
+    const catalog = /[0-9]{1,3}[A-Z]?$/.exec(coursePrereq[1])![0];
+    const courseId = await db.searchCourses(fastify, subject, catalog);
+    await db.insertCoursePrerequisites(fastify, {
+      parentPrerequisiteId: parentPrerequisiteId,
+      parentCourseId: parentCourseId,
       requisiteType: requisiteType,
-      parentId: id,
+      requisiteSubtype: "course",
+      courseId: courseId,
     });
-    if (prereq2[3].trim() !== "") {
-      const courses = prereq2[3].split(
-        /(?<!\([^)]*),\s+(?!(?:|fall|winter|spring)\s*[0-9]{4})/g,
-      );
-      parseCourses(fastify, courses, requisiteType, newId);
-      return [null, coreqId];
-    } else return [newId, coreqId];
-  } else if (prereq3) {
-    const newId = await db.insertPrerequisites(fastify, {
-      ...nullPrerequisite,
-      amount: 1,
-      requisiteType: "antireq",
-      parentId: id,
-    });
-    if (prereq3[1].trim() !== "") {
-      const courses = prereq3[1].split(
-        /(?<!\([^)]*),\s+(?!(?:|fall|winter|spring)\s*[0-9]{4})/g,
-      );
-      parseCourses(fastify, courses, "antireq", newId);
-      return [null, coreqId];
-    } else return [newId, coreqId];
-  } else if (prereq4) {
-    const level = prereq4[1];
-    db.insertLevelPrerequisites(fastify, {
-      ...nullPrerequisite,
-      level: prereq4[2] === "" ? level : level + "+",
+    return {
+      parentPrerequisiteId: null,
+      coreqId: coreqId,
+      requisiteType: null
+    };
+  } else if (parentPrereq) {
+    if (parentPrereq[1] !== "") requisiteType = "coreq";
+    const amount =
+      parentPrereq[2] === "" || parentPrereq[2].trim() === "all"
+        ? 0
+        : parentPrereq[2] === " one"
+          ? 1
+          : Number(parentPrereq[2].trim());
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      amount: amount,
       requisiteType: "prereq",
-      parentId: id,
+      requisiteSubtype: "parent",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
     });
-    return [null, coreqId];
-  } else if (prereq5) {
-    const grade = Number(/[0-9]{2}/.exec(prereq5[1]));
-    const amt = prereq5[2] === "each" ? 0 : Number(/[1-9]/.exec(prereq5[2]));
-    await db.insertPrerequisites(fastify, {
-      ...nullPrerequisite,
+    return {
+      parentPrerequisiteId: parentPrerequisiteId,
+      coreqId: coreqId,
+      requisiteType: requisiteType
+    };
+  } else if (pseudoCoursePrereq) {
+    if (pseudoCoursePrereq[1] !== "") requisiteType = "coreq";
+    const amount =
+      pseudoCoursePrereq[2] === "" || pseudoCoursePrereq[2].trim() === "all"
+        ? 0
+        : pseudoCoursePrereq[2] === " one"
+          ? 1
+          : Number(pseudoCoursePrereq[2].trim());
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      amount: amount,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+    });
+    const courses = pseudoCoursePrereq[3].split(
+      /(?<!\([^)]*),\s+(?!(?:|fall|winter|spring)\s*[0-9]{4})/g,
+    );
+    parseCourses(fastify, courses, requisiteType, parentPrerequisiteId);
+    return {
+      parentPrerequisiteId: null,
+      coreqId: coreqId,
+      requisiteType: null
+    };
+  } else if (parentAntireq) {
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      amount: 0,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+    });
+    return {
+      parentPrerequisiteId: parentPrerequisiteId,
+      coreqId: coreqId,
+      requisiteType: 'antireq'
+    };
+  } else if (pseudoCourseAntireq) {
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      amount: 0,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+    });
+    const courses = pseudoCourseAntireq[1].split(
+      /(?<!\([^)]*),\s+(?!(?:|fall|winter|spring)\s*[0-9]{4})/g,
+    );
+    parseCourses(fastify, courses, "antireq", parentPrerequisiteId);
+    return {
+      parentPrerequisiteId: null,
+      coreqId: coreqId,
+      requisiteType: null
+    };
+  } else if (levelPrereq) {
+    const level = levelPrereq[1];
+    db.insertLevelPrerequisites(fastify, {
+      level: levelPrereq[2] === "" ? level : level + "+",
+      requisiteType: "prereq",
+      requisiteSubtype: "level",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+    });
+    return {
+      parentPrerequisiteId: null,
+      coreqId: coreqId,
+      requisiteType: null
+    };
+  } else if (gradePrereq) {
+    const grade = Number(/[0-9]{2}/.exec(gradePrereq[1]));
+    const amt =
+      gradePrereq[2] === "each" ? 0 : Number(/[1-9]/.exec(gradePrereq[2]));
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
       amount: amt,
       grade: grade,
       requisiteType: "prereq",
-      parentId: id,
+      requisiteSubtype: "parent",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
     });
-    return [id, coreqId];
-  } else if (prereq6) {
-    const units = Number(prereq6[1]);
-    const subjects = prereq6[2].replace(/\s/g, "").replace("or", "").split(",");
-    const pseudoCourses: PseudoCourse[] = [];
-    for (let i = 0; i < subjects.length; ++i) {
-      pseudoCourses.push({ ...nullPseudoCourse, subject: subjects[i] });
-    }
+    return {
+      parentPrerequisiteId: parentPrerequisiteId,
+      coreqId: coreqId,
+      requisiteType: requisiteType
+    };
+  } else if (unitPrereq) {
+    const units = Number(unitPrereq[1]);
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+      units: units,
+    });
+    const subjects = unitPrereq[2]
+      .replace(/\s/g, "")
+      .replace("or", "")
+      .split(",");
     let minCatalogNumber = null;
     let maxCatalogNumber = null;
     let component = null;
-    if (/[0-9]{3} - [0-9]{3}/g.exec(prereq6[3])) {
-      minCatalogNumber = Number(prereq6[3].split("-")[0].trim());
-      maxCatalogNumber = Number(prereq6[3].split("-")[1].trim());
-    } else if (/[0-9]{3}-level studio courses/g.exec(prereq6[3])) {
-      const level = Number(/[0-9]{3}/g.exec(prereq6[3])![1]);
+    if (/[0-9]{3} - [0-9]{3}/g.exec(unitPrereq[3])) {
+      minCatalogNumber = Number(unitPrereq[3].split("-")[0].trim());
+      maxCatalogNumber = Number(unitPrereq[3].split("-")[1].trim());
+    } else if (/[0-9]{3}-level studio courses/g.exec(unitPrereq[3])) {
+      const level = Number(/[0-9]{3}/g.exec(unitPrereq[3])![1]);
       minCatalogNumber = level;
       maxCatalogNumber = level + 99;
       component = "STU";
     }
     for (let i = 0; i < subjects.length; ++i) {
-      pseudoCourses.push({
-        ...nullPseudoCourse,
+      db.insertPseudoCoursePrerequisites(fastify, {
+        ...nullPseudoCoursePrerequisite,
+        requisiteType: "prereq",
+        requisiteSubtype: "pseudoCourse",
+        parentPrerequisiteId: parentPrerequisiteId,
         subject: subjects[i],
         minCatalogNumber: minCatalogNumber,
         maxCatalogNumber: maxCatalogNumber,
         component: component,
       });
     }
-    db.insertCoursePrerequisites(fastify, {
-      ...nullPrerequisite,
-      units: units,
+    return {
+      parentPrerequisiteId: null,
+      coreqId: coreqId,
+      requisiteType: null
+    };
+  } else if (cumulativeAveragePrereq) {
+    const cumulativeAverage = Number(cumulativeAveragePrereq[1]);
+    db.insertCumulativeAveragePrerequisites(fastify, {
       requisiteType: "prereq",
-      parentId: id,
-      pseudoCourses: pseudoCourses,
+      requisiteSubtype: "cumulativeAverage",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+      cumulativeAverage: cumulativeAverage,
     });
-    return [null, coreqId];
-  } else if (prereq7) {
-    const average = Number(prereq7[3]);
-    if (prereq7[1] === "") {
-      let avg: averageType;
-      if (prereq7[2] === "") avg = "CAV";
-      else avg = "MAV";
-      const averageType = avg;
-      db.insertProgramPrerequisites(fastify, {
-        ...nullPrerequisite,
-        average: average,
-        averageType: averageType,
-        parentId: id,
-        programs: null,
-        faculties: null,
+    return {
+      parentPrerequisiteId: null,
+      coreqId: coreqId,
+      requisiteType: null
+    };
+  } else if (programAveragePrereq) {
+    const average = Number(programAveragePrereq[2]);
+    if (programAveragePrereq[1] === "major") {
+      db.insertMajorAveragePrerequisites(fastify, {
+        requisiteType: "prereq",
+        requisiteSubtype: "majorAverage",
+        parentCourseId: parentCourseId,
+        parentPrerequisiteId: parentPrerequisiteId,
+        majorAverage: average,
       });
-      return [null, coreqId];
     } else {
-      const averageType = "MAV";
-      let program;
-      if (prereq7[1] === "ANTH") program = "Anthropology";
-      else if (prereq7[1] === "HRM") program = "Human Resources Management";
-      else program = prereq7[1];
-      const programs = await db.searchPrograms(fastify, program);
-      db.insertProgramPrerequisites(fastify, {
-        ...nullPrerequisite,
-        average: average,
-        averageType: averageType,
-        parentId: id,
-        programs: programs,
-        faculties: null,
+      let programName = programAveragePrereq[1].split(/\s+major/g)[0];
+      if (programName === "ANTH") programName = "Anthropology";
+      else if (programName === "HRM")
+        programName = "Human Resources Management";
+      const programs = await db.searchPrograms(fastify, programName);
+      parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+        ...nullParentPrerequisite,
+        requisiteType: "prereq",
+        requisiteSubtype: "parent",
+        parentCourseId: parentCourseId,
+        parentPrerequisiteId: parentPrerequisiteId,
+        programAverage: average,
       });
-      return [null, coreqId];
+      for (const program of programs) {
+        db.insertProgramPrerequisites(fastify, {
+          requisiteType: "prereq",
+          requisiteSubtype: "program",
+          parentCourseId: null,
+          parentPrerequisiteId: parentPrerequisiteId,
+          programId: program,
+        });
+      }
     }
-  } else if (prereq8) {
-    return [null, id];
+    return {
+      parentPrerequisiteId: null,
+      coreqId: coreqId,
+      requisiteType: null
+    };
+  } else if (attachedCoreq) {
+    return {
+      parentPrerequisiteId: null,
+      coreqId: parentPrerequisiteId,
+      requisiteType: null
+    };
+  } else if (programPrereq) {
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+      amount: 1,
+    });
+    const programText = programPrereq[1];
+    const programs = programText.match(/(?<=a<)[^>]*(?=>)/g)!;
+    for (const program of programs) {
+      const programId = await util.convertProgramName(fastify, program);
+      db.insertProgramPrerequisites(fastify, {
+        requisiteType: "prereq",
+        requisiteSubtype: "program",
+        parentCourseId: null,
+        parentPrerequisiteId: parentPrerequisiteId,
+        programId: programId,
+      });
+    }
+    return {
+      parentPrerequisiteId: null,
+      coreqId: coreqId,
+      requisiteType: null
+    };
+  } else if (programAntireq) {
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+      amount: 0,
+    });
+    const programText = programAntireq[1];
+    const programs = programText.match(/(?<=a<)[^>]*(?=>)/g)!;
+    for (const program of programs) {
+      const programId = await util.convertProgramName(fastify, program);
+      db.insertProgramPrerequisites(fastify, {
+        requisiteType: "antireq",
+        requisiteSubtype: "program",
+        parentCourseId: null,
+        parentPrerequisiteId: parentPrerequisiteId,
+        programId: programId,
+      });
+    }
+    return {
+      parentPrerequisiteId: null,
+      coreqId: coreqId,
+      requisiteType: null
+    };
+  } else if (pseudoProgramPrereq) {
+    const pseudoProgramText = pseudoProgramPrereq[0]
+      .replace(
+        /Enrolled in (?:an|a program offered by\s*(?:the|)|a program in|a|)\s*/g,
+        "",
+      )
+      .replace(/(?:\s*(?:program|plan)|(?:Faculty of|Faculties of)\s*)/g, "");
+    const pseudoPrograms = pseudoProgramText.split(
+      /\s*(?:, or|or a(?:n|)|or|,)\s*/,
+    );
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+      amount: 1,
+    });
+    let majorType: majorType | null = null;
+    let majorSystem: majorSystem | null = null;
+    for (const pseudoProgram of pseudoPrograms) {
+      if (pseudoProgram === "Mathematics/BASE") {
+        db.insertOtherPrerequisites(fastify, {
+          requisiteType: "prereq",
+          requisiteSubtype: "other",
+          parentCourseId: null,
+          parentPrerequisiteId: parentPrerequisiteId,
+          other: "Enrolled in Mathematics/BASE",
+        });
+      } else {
+        if (pseudoProgram.includes("Honours")) majorType = "H";
+        if (pseudoProgram.includes("co-operative"))
+          majorSystem = "Co-operative";
+        const facultyName = pseudoProgram
+          .replace(/Honours\s*/, "")
+          .replace(/co-operative\s*/, "");
+        const facultyCode =
+          facultyName === ""
+            ? null
+            : await db.searchFaculties(fastify, facultyName);
+        db.insertPseudoProgramPrerequisites(fastify, {
+          ...nullPseudoProgramPrerequisite,
+          requisiteType: "prereq",
+          requisiteSubtype: "pseudoProgram",
+          parentPrerequisiteId: parentPrerequisiteId,
+          faculty: facultyCode,
+          majorType: majorType,
+          majorSystem: majorSystem,
+        });
+      }
+    }
+    return {
+      parentPrerequisiteId: null,
+      coreqId: coreqId,
+      requisiteType: null
+    };
+  } else if (pseudoProgramAntireq) {
+    const pseudoProgramText = pseudoProgramAntireq[0]
+      .replace(
+        /Not open to students\s*(?:enrolled|)\s*in (?:an|a program offered by\s*(?:the|)|a program in|a|the|)\s*/g,
+        "",
+      )
+      .replace(/(?:\s*(?:program|plan)|(?:Faculty of|Faculties of)\s*)/g, "");
+    const pseudoPrograms = pseudoProgramText.split(
+      /\s*(?:, or|or a(?:n|)|or|,)\s*/,
+    );
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+      amount: 0,
+    });
+    let majorType: majorType | null = null;
+    let majorSystem: majorSystem | null = null;
+    for (const pseudoProgram of pseudoPrograms) {
+      if (pseudoProgram === "Mathematics/BASE") {
+        db.insertOtherPrerequisites(fastify, {
+          requisiteType: "prereq",
+          requisiteSubtype: "other",
+          parentCourseId: null,
+          parentPrerequisiteId: parentPrerequisiteId,
+          other: "Enrolled in Mathematics/BASE",
+        });
+      } else {
+        if (pseudoProgram.includes("Honours")) majorType = "H";
+        if (pseudoProgram.includes("co-operative"))
+          majorSystem = "Co-operative";
+        const facultyName = pseudoProgram
+          .replace(/Honours\s*/, "")
+          .replace(/co-operative\s*/, "");
+        const facultyCode =
+          facultyName === ""
+            ? null
+            : await db.searchFaculties(fastify, facultyName);
+        db.insertPseudoProgramPrerequisites(fastify, {
+          ...nullPseudoProgramPrerequisite,
+          requisiteType: "antireq",
+          requisiteSubtype: "pseudoProgram",
+          parentPrerequisiteId: parentPrerequisiteId,
+          faculty: facultyCode,
+          majorType: majorType,
+          majorSystem: majorSystem,
+        });
+      }
+    }
+    return {
+      parentPrerequisiteId: null,
+      coreqId: coreqId,
+      requisiteType: null
+    };
+  } else if (degreePrereq) {
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+      amount: 1,
+    })
+    const degrees = degreePrereq[1].split(/\s*or\s*/g);
+    for (let degree of degrees) {
+      if (degreePrereq[2]) degree += `(${degreePrereq[2].replace('Faculty of ', '')})`\
+      if (degree === 'BASc') degree = 'Bachelor of Applied Science'
+      const degreeId = await db.searchDegrees(fastify, degree)
+      db.insertDegreePrerequisites(fastify, {
+        requisiteType: 'prereq',
+        requisiteSubtype: 'degree',
+        parentCourseId: null,
+        parentPrerequisiteId: parentPrerequisiteId,
+        degreeId: degreeId
+      })
+    }
+    return {
+      parentPrerequisiteId: null,
+      coreqId: coreqId,
+      requisiteType: null
+    };
+  } else if (degreeAntireq) {
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+      amount: 0,
+    })
+    const degrees = degreeAntireq[1].split(/\s*or\s*/g);
+    for (let degree of degrees) {
+      const degreeId = await db.searchDegrees(fastify, degree)
+      db.insertDegreePrerequisites(fastify, {
+        requisiteType: 'antireq',
+        requisiteSubtype: 'degree',
+        parentCourseId: null,
+        parentPrerequisiteId: parentPrerequisiteId,
+        degreeId: degreeId
+      })
+    }
+    return {
+      parentPrerequisiteId: null,
+      coreqId: coreqId,
+      requisiteType: null
+    };
+  } 
+  // Edge case time!!
+  else if (requirement === 'Enrolled in an Engineering program') {
+    db.insertPseudoProgramPrerequisites(fastify, {
+      ...nullPseudoProgramPrerequisite,
+      requisiteType: 'prereq',
+      requisiteSubtype: 'pseudoProgram',
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+      faculty: 'ENG'
+    })
+    return {
+      parentPrerequisiteId: null,
+      coreqId: coreqId,
+      requisiteType: null
+    };
+  } else if (requirement === 'Not completed nor concurrently enrolled in: All 200-, 300-, 400-level CS courses or equivalents') {
+    db.insertPseudoCoursePrerequisites(fastify, {
+      ...nullPseudoCoursePrerequisite,
+      requisiteType: 'antireq',
+      requisiteSubtype: 'pseudoCourse',
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+      subject: 'CS',
+      minCatalogNumber: 200,
+      maxCatalogNumber: 499
+    })
+    return {
+      parentPrerequisiteId: null,
+      coreqId: coreqId,
+      requisiteType: null
+    };
+  } else if (requirement === 'Enrolled in a program offered by all faculties, excluding Faculty of Mathematics') {
+    db.insertPseudoProgramPrerequisites(fastify, {
+      ...nullPseudoProgramPrerequisite,
+      requisiteType: 'antireq',
+      requisiteSubtype: 'pseudoProgram',
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+      faculty: 'MAT'
+    })
+    return {
+      parentPrerequisiteId: null,
+      coreqId: coreqId,
+      requisiteType: null
+    };
+  } else if (requirement === '(For students in the Faculty of Mathematics only), not completed nor concurrently enrolled in: BUS231W') {
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+      amount: 1,
+    })
+    db.insertPseudoProgramPrerequisites(fastify, {
+      ...nullPseudoProgramPrerequisite,
+      requisiteType: "antireq",
+      requisiteSubtype: "pseudoProgram",
+      parentCourseId: null,
+      parentPrerequisiteId: parentPrerequisiteId,
+      faculty: 'MAT'
+    })
+    db.insertPseudoCoursePrerequisites(fastify, {
+      ...nullPseudoCoursePrerequisite,
+      requisiteType: "antireq",
+      requisiteSubtype: "pseudoCourse",
+      parentCourseId: null,
+      parentPrerequisiteId: parentPrerequisiteId,
+      subject: 'BUS',
+      catalogNumber: '231W'
+    })
+  } else if (requirement === 'Not open to Arts and Business students in level 1A or 1B') {
+    const programId = (await db.searchPrograms(fastify, 'Arts and Business'))[0]
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+      amount: 1,
+    })
+    db.insertProgramPrerequisites(fastify, {
+      requisiteType: "antireq",
+      requisiteSubtype: "program",
+      parentCourseId: null,
+      parentPrerequisiteId: parentPrerequisiteId,
+      programId: programId
+    })
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: null,
+      parentPrerequisiteId: parentPrerequisiteId,
+      amount: 0,
+    })
+    db.insertLevelPrerequisites(fastify, {
+      requisiteType: "antireq",
+      requisiteSubtype: "level",
+      parentCourseId: null,
+      parentPrerequisiteId: parentPrerequisiteId,
+      level = '1A'
+    })
+    db.insertLevelPrerequisites(fastify, {
+      requisiteType: "antireq",
+      requisiteSubtype: "level",
+      parentCourseId: null,
+      parentPrerequisiteId: parentPrerequisiteId,
+      level = '1B'
+    })
+    return {
+      parentPrerequisiteId: null,
+      coreqId: coreqId,
+      requisiteType: null
+    };
+  } else if (requirement === 'The following antirequisites are only for students in the Faculty of Mathematics.' || 
+    requirement === 'The following prerequisites are applicable to students enrolled in a Faculty of Mathematics program') {
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+      amount: 1,
+    })
+    db.insertPseudoProgramPrerequisites(fastify, {
+      ...nullPseudoProgramPrerequisite,
+      requisiteType: "antireq",
+      requisiteSubtype: "pseudoProgram",
+      parentCourseId: null,
+      parentPrerequisiteId: parentPrerequisiteId,
+      faculty: 'MAT'
+    })
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: null,
+      parentPrerequisiteId: parentPrerequisiteId,
+      amount: 0,
+    })
+    if (requirement === 'The following antirequisites are only for students in the Faculty of Mathematics.') requisiteType = 'antireq'
+    else requisiteType = 'prereq'
+    return {
+      parentPrerequisiteId: parentPrerequisiteId,
+      coreqId: coreqId,
+      requisiteType: requisiteType
+    };
+  } else if (requirement === 'Corequisite is for students enrolled in Chemical Engineering only:' ||
+    requirement === 'The corequisite listed is only for students majoring in Kinesiology' ||
+    requirement === 'Corequisite is for H-Kinesiology students only' ||
+    requirement === 'Corequisite is for students enrolled in Biotechnology/Chartered Professional Accountancy'
+  ) {
+    const programIds = requirement.includes('Chemical Engineering') ? 
+    [await util.convertProgramName(fastify, 'Chemical Engineering')] :
+    requirement.includes('Biotechnology/Chartered Professional Accountancy') ?
+    [await util.convertProgramName(fastify, 'Biotechnology/Chartered Professional Accountancy')] :
+    requirement.includes('H-Kinesiology') ? 
+    [await util.convertProgramName(fastify, 'H-Kinesiology')] :
+    await db.searchPrograms(fastify, 'Kinesiology')
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+      amount: 1,
+    })
+    for (const programId of programIds) {
+      db.insertProgramPrerequisites(fastify, {
+        requisiteType: "antireq",
+        requisiteSubtype: "program",
+        parentCourseId: null,
+        parentPrerequisiteId: parentPrerequisiteId,
+        programId: programId
+      })
+    }
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: null,
+      parentPrerequisiteId: parentPrerequisiteId,
+      amount: 0,
+    })
+    return {
+      parentPrerequisiteId: parentPrerequisiteId,
+      coreqId: coreqId,
+      requisiteType: "coreq"
+    };
+  } else if (requirement === 'Corequisite is for students enrolled in a Faculty of Science program (with the exception of Mathematical Physics)'
+  ) {
+    const programIds = [await util.convertProgramName(fastify, 'Mathematical Physics (BSc)')]
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+      amount: 1,
+    })
+    db.insertPseudoProgramPrerequisites(fastify, {
+      ...nullPseudoProgramPrerequisite,
+      requisiteType: "antireq",
+      requisiteSubtype: "pseudoProgram",
+      parentCourseId: null,
+      parentPrerequisiteId: parentPrerequisiteId,
+      faculty: 'SCI'
+    })
+    for (const programId of programIds) {
+      db.insertProgramPrerequisites(fastify, {
+        requisiteType: "prereq",
+        requisiteSubtype: "program",
+        parentCourseId: null,
+        parentPrerequisiteId: parentPrerequisiteId,
+        programId: programId
+      })
+    }
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: null,
+      parentPrerequisiteId: parentPrerequisiteId,
+      amount: 0,
+    })
+    return {
+      parentPrerequisiteId: parentPrerequisiteId,
+      coreqId: coreqId,
+      requisiteType: "coreq"
+    };
+  } else if (requirement === 'The corequisite listed is only for students in Faculty of Science majors, except for Materials and Nanosciences, Mathematical Physics (BSc)'
+  ) {
+    const programIds = [await util.convertProgramName(fastify, 'Mathematical Physics (BSc)')]
+    programIds.push(await util.convertProgramName(fastify, 'Materials and Nanosciences'))
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+      amount: 1,
+    })
+    db.insertPseudoProgramPrerequisites(fastify, {
+      ...nullPseudoProgramPrerequisite,
+      requisiteType: "antireq",
+      requisiteSubtype: "pseudoProgram",
+      parentCourseId: null,
+      parentPrerequisiteId: parentPrerequisiteId,
+      faculty: 'SCI'
+    })
+    for (const programId of programIds) {
+      db.insertProgramPrerequisites(fastify, {
+        requisiteType: "prereq",
+        requisiteSubtype: "program",
+        parentCourseId: null,
+        parentPrerequisiteId: parentPrerequisiteId,
+        programId: programId
+      })
+    }
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: null,
+      parentPrerequisiteId: parentPrerequisiteId,
+      amount: 0,
+    })
+    return {
+      parentPrerequisiteId: parentPrerequisiteId,
+      coreqId: coreqId,
+      requisiteType: "coreq"
+    };
+  } else if (requirement === 'Corequisite is required if students have not completed 4U Math'
+    ) {
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
+      amount: 1,
+    })
+    db.insertOtherPrerequisites(fastify, {
+      requisiteType: "antireq",
+      requisiteSubtype: "other",
+      parentCourseId: null,
+      parentPrerequisiteId: parentPrerequisiteId,
+      other: "Must have taken 4U Math"
+    })
+    parentPrerequisiteId = await db.insertParentPrerequisites(fastify, {
+      ...nullParentPrerequisite,
+      requisiteType: "prereq",
+      requisiteSubtype: "parent",
+      parentCourseId: null,
+      parentPrerequisiteId: parentPrerequisiteId,
+      amount: 0,
+    })
+    return {
+      parentPrerequisiteId: parentPrerequisiteId,
+      coreqId: coreqId,
+      requisiteType: "coreq"
+    };
+  } else if (requirement === 'AMATH231 can be taken concurrently') {
+    db.alterPHYS242Prerequisite(fastify, parentPrerequisiteId)
   } else {
     console.log(requirement);
     db.insertOtherPrerequisites(fastify, {
-      ...nullPrerequisite,
+      requisiteType: requisiteType,
+      requisiteSubtype: "other",
+      parentCourseId: parentCourseId,
+      parentPrerequisiteId: parentPrerequisiteId,
       other: requirement,
-      parentId: id,
     });
-    return [null, id];
+    return {
+      parentPrerequisiteId: null,
+      coreqId: coreqId,
+      requisiteType: null
+    };
   }
 }
 
@@ -215,16 +885,14 @@ async function parseCourses(
             .split(/(?:,\s*|(?<=(?:taken|prior).*)\s+(?=fall|winter|spring))/g);
           parseTerms(fastify, terms, requisiteType, subject, catalog, id);
         } else {
-          db.insertPseudoCourses(
-            fastify,
-            id,
-            {
-              ...nullPseudoCourse,
-              subject: subject,
-              catalogNumber: catalog,
-            },
-            "Prerequisite",
-          );
+          db.insertPseudoCoursePrerequisites(fastify, {
+            ...nullPseudoCoursePrerequisite,
+            requisiteType: requisiteType,
+            requisiteSubtype: "pseudoCourse",
+            parentPrerequisiteId: id,
+            subject: subject,
+            catalogNumber: catalog,
+          });
         }
       }
     } else {
@@ -244,16 +912,14 @@ async function parseCourses(
           .split(/(?:,\s*|(?<=(?:taken|prior).*)\s+(?=fall|winter|spring))/g);
         parseTerms(fastify, terms, requisiteType, subject, catalog, id);
       } else {
-        db.insertPseudoCourses(
-          fastify,
-          id,
-          {
-            ...nullPseudoCourse,
-            subject: subject,
-            catalogNumber: catalog,
-          },
-          "Prerequisite",
-        );
+        db.insertPseudoCoursePrerequisites(fastify, {
+          ...nullPseudoCoursePrerequisite,
+          requisiteType: requisiteType,
+          requisiteSubtype: "pseudoCourse",
+          parentPrerequisiteId: id,
+          subject: subject,
+          catalogNumber: catalog,
+        });
       }
     }
   }
@@ -269,17 +935,15 @@ async function parseTopics(
 ) {
   for (let i = 0; i < topics.length; ++i) {
     const topic = topics[i].replace(/Topic [0-9]*:?/g, "").trim();
-    db.insertPseudoCourses(
-      fastify,
-      id,
-      {
-        ...nullPseudoCourse,
-        subject: subject,
-        catalogNumber: catalog,
-        topic: topic,
-      },
-      "Prerequisite",
-    );
+    db.insertPseudoCoursePrerequisites(fastify, {
+      ...nullPseudoCoursePrerequisite,
+      requisiteType: requisiteType,
+      requisiteSubtype: "pseudoCourse",
+      parentPrerequisiteId: id,
+      subject: subject,
+      catalogNumber: catalog,
+      topic: topic,
+    });
   }
 }
 
@@ -311,31 +975,23 @@ async function parseTerms(
       defaultTerm = "S";
     } else term += defaultTerm;
     term += data.length > 1 ? data[1] : data[0];
-    db.insertPseudoCourses(
-      fastify,
-      id,
-      {
-        ...nullPseudoCourse,
-        subject: subject,
-        catalogNumber: catalog,
-        term: term,
-      },
-      "Prerequisite",
-    );
+    db.insertPseudoCoursePrerequisites(fastify, {
+      ...nullPseudoCoursePrerequisite,
+      requisiteType: requisiteType,
+      requisiteSubtype: "pseudoCourse",
+      parentPrerequisiteId: id,
+      subject: subject,
+      catalogNumber: catalog,
+      term: term,
+    });
   }
 }
 
-const nullPrerequisite: Prerequisite = {
-  amount: null,
-  parentId: null,
-  courseId: null,
-  requisiteType: null,
-  requisiteSubtype: null,
-  grade: null,
-  courses: null,
-};
-
-const nullPseudoCourse: PseudoCourse = {
+const nullPseudoCoursePrerequisite: PseudoCoursePrerequisite = {
+  parentCourseId: null,
+  parentPrerequisiteId: null,
+  requisiteType: "prereq",
+  requisiteSubtype: "pseudoCourse",
   subject: null,
   catalogNumber: null,
   minCatalogNumber: null,
@@ -343,5 +999,26 @@ const nullPseudoCourse: PseudoCourse = {
   topic: null,
   term: null,
   component: null,
+};
+
+const nullPseudoProgramPrerequisite: PseudoProgramPrerequisite = {
+  parentCourseId: null,
+  parentPrerequisiteId: null,
+  requisiteType: "prereq",
+  requisiteSubtype: "pseudoCourse",
   faculty: null,
+  majorType: null,
+  majorSystem: null,
+};
+
+const nullParentPrerequisite: ParentPrerequisite = {
+  parentCourseId: null,
+  parentPrerequisiteId: null,
+  requisiteType: "prereq",
+  requisiteSubtype: "parent",
+  amount: null,
+  grade: null,
+  units: null,
+  programAverage: null,
+  prerequisites: null,
 };

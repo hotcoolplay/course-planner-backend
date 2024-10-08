@@ -80,7 +80,7 @@ interface WorkRequirement extends Requirement {
 interface CourseList {
   name: string | null;
   courseLists: CourseList[] | null;
-  courses: PseudoCourse[] | null;
+  courses: Course[] | null;
 }
 
 interface Course {
@@ -98,42 +98,32 @@ interface Course {
   prerequisites: Prerequisites[];
 }
 
-interface PseudoCourse {
-  subject: string | null;
-  catalogNumber: string | null;
-  minCatalogNumber: number | null;
-  maxCatalogNumber: number | null;
-  topic: string | null;
-  term: string | null;
-  component: string | null;
-  faculty: string | null;
-}
-
 interface Term {
   name: string;
   code: string;
 }
 
 interface Prerequisite {
+  parentPrerequisiteId: number | null;
+  parentCourseId: number | null;
+  requisiteType: requisiteType;
+  requisiteSubtype: requisiteSubtype;
+}
+
+interface ParentPrerequisite extends Prerequisite {
   amount: number | null;
-  parentId: number | null;
-  courseId: number | null;
-  requisiteType: requisiteType | null;
-  requisiteSubtype: requisiteSubtype | null;
   grade: number | null;
-  courses: Course[] | null;
+  units: number | null;
+  programAverage: number | null;
+  prerequisites: Prerequisite[] | null;
 }
 
 interface CoursePrerequisite extends Prerequisite {
-  units: number | null;
-  pseudoCourses: PseudoCourse[];
+  courseId: number;
 }
 
 interface ProgramPrerequisite extends Prerequisite {
-  average: number | null;
-  averageType: averageType | null;
-  programs: number[] | null;
-  faculties: string[] | null;
+  programId: number;
 }
 
 interface LevelPrerequisite extends Prerequisite {
@@ -144,8 +134,46 @@ interface OtherPrerequisite extends Prerequisite {
   other: string;
 }
 
+interface PseudoCoursePrerequisite extends Prerequisite {
+  subject: string | null;
+  catalogNumber: string | null;
+  minCatalogNumber: number | null;
+  maxCatalogNumber: number | null;
+  topic: string | null;
+  term: string | null;
+  component: string | null;
+}
+
+interface CumulativeAveragePrerequisite extends Prerequisite {
+  cumulativeAverage: number;
+}
+
+interface MajorAveragePrerequisite extends Prerequisite {
+  majorAverage: number;
+}
+
+interface PseudoProgramPrerequisite extends Prerequisite {
+  faculty: string | null;
+  majorType: majorType | null;
+  majorSystem: majorSystem | null;
+}
+
+interface DegreePrerequisite extends Prerequisite {
+  degreeId: number;
+}
+
 type requisiteType = "antireq" | "prereq" | "coreq";
-type requisiteSubtype = "course" | "level" | "program" | "other" | "requisite";
+type requisiteSubtype =
+  | "course"
+  | "level"
+  | "program"
+  | "other"
+  | "parent"
+  | "pseudoCourse"
+  | "pseudoProgram"
+  | "degree"
+  | "cumulativeAverage"
+  | "majorAverage";
 type averageType = "CAV" | "MAV" | "SMAV" | "TAV";
 type programSubtype =
   | "Diploma"
@@ -169,3 +197,4 @@ type requirementSubtype = "Declaration" | "Graduation";
 type majorType = "H" | "JH" | "3G" | "4G";
 type unitType = "failed" | "unusable" | "minimum";
 type workType = "Standard" | "Flexible";
+type majorSystem = "Regular" | "Co-operative";

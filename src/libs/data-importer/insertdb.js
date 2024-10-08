@@ -4,12 +4,12 @@ export async function insertCourses(fastify, course) {
     ON CONFLICT (subject, catalogNumber) DO UPDATE 
     SET courseid = $3, 
     units = $4, 
-    component = $5,
-    title = $6, 
-    faculty = $7, 
-    grading = $8, 
-    completions = $9, 
-    simultaneous_enrollment = $10, 
+    faculty = $5,
+    component = $6, 
+    completions = $7, 
+    simultaneous_enrollment = $8, 
+    grading = $9, 
+    title = $10, 
     description = $11 
     WHERE courses.subject = $1 
     AND courses.catalogNumber = $2
@@ -18,12 +18,12 @@ export async function insertCourses(fastify, course) {
         course.catalogNumber,
         course.courseid,
         course.units,
-        course.component,
-        course.title,
         course.faculty,
-        course.grading,
+        course.component,
         course.completions,
         course.simulEnroll,
+        course.grading,
+        course.title,
         course.description,
     ]);
     return result.rows[0].id;

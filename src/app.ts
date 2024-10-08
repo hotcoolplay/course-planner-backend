@@ -11,6 +11,8 @@ import envs from "./libs/setup/envs.js";
 import db from "./libs/setup/db.js";
 import fastify from "fastify";
 
+export const prerequisiteTexts = new Set();
+
 const server = fastify({
   logger: true,
 });
@@ -42,8 +44,8 @@ server.listen({ port: Number(process.env.PORT) }, (err, address: string) => {
   console.log(`Server listening at ${address}`);
   //schedule.scheduleJob('00 00 00 * *', async function(){
   //requestDegrees(server)
-  requestPrograms(server);
-  //requestCourses(server);
+  //requestPrograms(server);
+  requestCourses(server);
   //requestTerms(server);
   //requestTermCourseList(server);
   //});

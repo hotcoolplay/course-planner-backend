@@ -136,14 +136,15 @@ async function scrapeSpecializations(
     throw new Error(
       `Text wasn't properly cleaned in the specializations heading for ${programProperties.name}`,
     );
-
-  const programRegex =
-    /(?<=(?:Option|Specialization|Minor|Diploma|Arts & Business|(?:H|JH|3G|4G)-.*))(?<!(?:English - Rhetoric|English - Rhetoric, Media|Environment|Sexuality|Sexuality, Marriage)),\s*(?:or|)\s*/g;
-  const majors = parentMajors.split(programRegex);
+  const majors = parentMajors.match(/(?<=a<)[^>]+(?=>)/g);
+  if (!majors) {
+    throw new Error(`Didn't locate any majors in parent majors string!`);
+  }
 
   const majorIds: number[] = [];
 
-  for (const major of majors) {
+  for (let i = 0; i < majors.length; ++i) {
+    const major = majors[i];
     majorIds.push(await util.convertProgramName(fastify, major));
   }
   return {
@@ -269,7 +270,8 @@ function parseDegreeName(name: string) {
   else if (name.split("(")[1].includes("Bachelor of Arts"))
     if (
       name.split("(")[0].includes("Therapeutic Recreation") ||
-      name.split("(")[0].includes("Recreation and Leisure Studies")
+      name.split("(")[0].includes("Recreation and Leisure Studies") ||
+      name.split("(")[0].includes("Recreation and Sport Business")
     )
       return "Bachelor of Arts (Health)";
     else return "Bachelor of Arts";

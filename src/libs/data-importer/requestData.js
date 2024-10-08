@@ -156,6 +156,7 @@ export async function requestCourses(fastify) {
         console.log("Going to url...");
         await uGradPage.goto(uGradUrl);
         console.log("Scraping courses...");
+        let uGradCourses = 1;
         for (let i = 0; i < data.length; ++i) {
             if (data[i].associatedAcademicCareer === "UG") {
                 if (data[i].subjectCode === "MSCI")
@@ -188,7 +189,6 @@ export async function requestCourses(fastify) {
                         prerequisites: [],
                     };
                     await db.insertCourses(fastify, course);
-                    console.log(`Inserted ${i + 1} of ${data.length} programs...`);
                 }
             }
         }

@@ -95,7 +95,8 @@ export async function cleanText(el: ElementHandle): Promise<string | null> {
   let text = "";
   for (let i = 0; i < nodes.length; ++i) {
     const name = await nodes[i].evaluate((el: Element) => el.nodeName);
-    if (name === "SPAN" || name === "A") text += await cleanText(nodes[i]);
+    if (name === "SPAN") text += await cleanText(nodes[i]);
+    else if (name === "A") text += "a<" + (await cleanText(nodes[i])) + ">";
     else text += await nodes[i].evaluate((el: Element) => el.nodeValue);
   }
   // eslint-disable-next-line no-control-regex
@@ -132,11 +133,16 @@ export async function convertProgramName(
     ? await db.fetchDegreeId(fastify, degreeName)
     : null;
 
-  const tempProgramName = name.match(hyphenRegex)
+  let tempProgramName = name.match(hyphenRegex)
     ? name.split(hyphenRegex)[1].includes(" (")
       ? name.split(hyphenRegex)[1].split(" (")[0]
       : name.split(hyphenRegex)[1]
     : name;
+
+  if (tempProgramName.endsWith("Diploma")) {
+    tempProgramName = tempProgramName.replace(" Diploma", "");
+    tempProgramName = "Diploma in " + tempProgramName;
+  }
 
   const majorType = identifier ? validateMajorType(identifier) : null;
 

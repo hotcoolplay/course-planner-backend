@@ -79,8 +79,10 @@ export async function cleanText(el) {
     let text = "";
     for (let i = 0; i < nodes.length; ++i) {
         const name = await nodes[i].evaluate((el) => el.nodeName);
-        if (name === "SPAN" || name === "A")
+        if (name === "SPAN")
             text += await cleanText(nodes[i]);
+        else if (name === "A")
+            text += "a<" + (await cleanText(nodes[i])) + ">";
         else
             text += await nodes[i].evaluate((el) => el.nodeValue);
     }
@@ -106,11 +108,15 @@ export async function convertProgramName(fastify, name) {
     const degree = degreeName
         ? await db.fetchDegreeId(fastify, degreeName)
         : null;
-    const tempProgramName = name.match(hyphenRegex)
+    let tempProgramName = name.match(hyphenRegex)
         ? name.split(hyphenRegex)[1].includes(" (")
             ? name.split(hyphenRegex)[1].split(" (")[0]
             : name.split(hyphenRegex)[1]
         : name;
+    if (tempProgramName.endsWith("Diploma")) {
+        tempProgramName = tempProgramName.replace(" Diploma", "");
+        tempProgramName = "Diploma in " + tempProgramName;
+    }
     const majorType = identifier ? validateMajorType(identifier) : null;
     const parentMajor = identifier && !majorType && PROGRAM_INITIALS.get(identifier)
         ? "%" + PROGRAM_INITIALS.get(identifier) + "%(%"

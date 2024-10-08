@@ -1,9 +1,10 @@
 import courseRoute from "./components/courses/api.js";
-import { requestPrograms, } from "./libs/data-importer/requestData.js";
+import { requestCourses, } from "./libs/data-importer/requestData.js";
 //import schedule from 'node-schedule'
 import envs from "./libs/setup/envs.js";
 import db from "./libs/setup/db.js";
 import fastify from "fastify";
+export const prerequisiteTexts = new Set();
 const server = fastify({
     logger: true,
 });
@@ -31,8 +32,8 @@ server.listen({ port: Number(process.env.PORT) }, (err, address) => {
     console.log(`Server listening at ${address}`);
     //schedule.scheduleJob('00 00 00 * *', async function(){
     //requestDegrees(server)
-    requestPrograms(server);
-    //requestCourses(server);
+    //requestPrograms(server);
+    requestCourses(server);
     //requestTerms(server);
     //requestTermCourseList(server);
     //});

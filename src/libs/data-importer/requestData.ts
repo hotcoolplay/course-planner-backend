@@ -5,6 +5,8 @@ import { FastifyInstance } from "fastify";
 import puppeteer from "puppeteer-extra";
 import stealthPlugin from "puppeteer-extra-plugin-stealth";
 import adblockerPlugin from "puppeteer-extra-plugin-adblocker";
+import fs from "fs";
+import { prerequisiteTexts } from "../../app.js";
 
 interface CourseResponse {
   courseId: string;
@@ -204,6 +206,7 @@ export async function requestCourses(fastify: FastifyInstance) {
       await uGradPage.goto(uGradUrl);
 
       console.log("Scraping courses...");
+      let uGradCourses = 1;
       for (let i = 0; i < data.length; ++i) {
         if (data[i].associatedAcademicCareer === "UG") {
           if (data[i].subjectCode === "MSCI") data[i].subjectCode = "MSE";
@@ -243,7 +246,7 @@ export async function requestCourses(fastify: FastifyInstance) {
               prerequisites: [],
             };
             await db.insertCourses(fastify, course);
-            console.log(`Inserted ${i + 1} of ${data.length} programs...`);
+            console.log(`Inserted ${uGradCourses++} courses...`);
           }
         }
       }

@@ -9,7 +9,7 @@ export interface IProgramSearchParams {
 export async function fetchDegreeId(
   fastify: FastifyInstance,
   name: string,
-): Promise<number | null> {
+): Promise<number> {
   const result = await fastify.pg.query(
     `SELECT id FROM degrees
         WHERE name = $1`,
@@ -21,7 +21,7 @@ export async function fetchDegreeId(
 export async function searchDegreeId(
   fastify: FastifyInstance,
   name: string,
-): Promise<number | null> {
+): Promise<number> {
   const result = await fastify.pg.query(
     `SELECT majors.degree_id AS degree_id
         FROM majors
@@ -36,7 +36,7 @@ export async function searchDegreeId(
 export async function searchMajorRegular(
   fastify: FastifyInstance,
   name: string,
-): Promise<boolean | null> {
+): Promise<boolean> {
   const result = await fastify.pg.query(
     `SELECT majors.regular AS regular
         FROM majors
@@ -51,7 +51,7 @@ export async function searchMajorRegular(
 export async function searchMajorCoop(
   fastify: FastifyInstance,
   name: string,
-): Promise<boolean | null> {
+): Promise<boolean> {
   const result = await fastify.pg.query(
     `SELECT majors.coop AS coop
         FROM majors
@@ -67,7 +67,7 @@ export async function searchProgramIds(
   fastify: FastifyInstance,
   name: string,
   opts: IProgramSearchParams,
-): Promise<number | null> {
+): Promise<number> {
   if (opts.parentDegree) {
     let query = `SELECT programs.id AS id
         FROM programs

@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { Browser, Page, ElementHandle } from "puppeteer";
 import * as util from "./scraper-utilities.js";
+import { prerequisiteTexts } from "../../../app.js";
 
 type CourseProperties = {
   units: number | null;
@@ -20,7 +21,10 @@ export async function scrapeCourse(
   await page.waitForSelector(subjectSelector);
 
   const button = await page.$(subjectSelector);
-  if (!button) throw new Error("Can't expand subject section!");
+  if (!button) {
+    console.error("Can't expand subject section!");
+    return { units: null, completions: null, simulEnroll: null };
+  }
 
   const expanded = await page.evaluate(
     (el: Element) => el.getAttribute("aria-expanded"),
@@ -45,7 +49,8 @@ export async function scrapeCourse(
     )[0];
     if (!units) {
       coursePage.close();
-      throw new Error("No units in the course!");
+      console.error("No units in the course!");
+      return { units: null, completions: null, simulEnroll: null };
     }
 
     const completionsHeading =
@@ -78,7 +83,8 @@ export async function scrapeCourse(
       simulEnroll: simulEnroll === "Yes",
     };
   } catch {
-    throw new Error("Couldn't load or access course page!");
+    console.error("Couldn't load or access course page!");
+    return { units: null, completions: null, simulEnroll: null };
   }
 }
 
@@ -87,6 +93,10 @@ async function fetchPrerequisites(el: ElementHandle) {
     `::-p-xpath(./*[not(self::span) and not(self::a)])`,
   );
   const text = await util.cleanText(el);
+  const size1 = prerequisiteTexts.size;
+  if (text) prerequisiteTexts.add(text);
+  const size2 = prerequisiteTexts.size;
+  if (size2 > size1) console.log(text);
   for (let i = 0; i < nodes.length; ++i) {
     await fetchPrerequisites(nodes[i]);
   }
