@@ -4,7 +4,7 @@ export async function insertCourses(fastify: FastifyInstance, course: Course) {
   const result = await fastify.pg.query(
     `INSERT INTO courses 
     VALUES(DEFAULT, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
-    ON CONFLICT (subject, catalogNumber) DO UPDATE 
+    ON CONFLICT (subject, catalog_number) DO UPDATE 
     SET courseid = $3, 
     units = $4, 
     faculty = $5,
@@ -15,7 +15,7 @@ export async function insertCourses(fastify: FastifyInstance, course: Course) {
     title = $10, 
     description = $11 
     WHERE courses.subject = $1 
-    AND courses.catalogNumber = $2
+    AND courses.catalog_number = $2
     RETURNING id`,
     [
       course.subjectcode,

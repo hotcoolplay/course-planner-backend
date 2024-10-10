@@ -269,7 +269,6 @@ a<ARCH276> - Timber: Design, Structure and Construction (0.50)
 ARCH126
 Not completed nor concurrently enrolled in: ARCH226
 ARCH384
-Couldn't load or access course page!
 ARCH392
 a<ARCH293> - Design Studio (1.50)
 ARCH393
@@ -4716,8 +4715,6 @@ AFM363
 a<AFM362> - Corporate Taxation (0.50)
 AFM462
 HIST282
-BUS-----
-Couldn't load or access course page!
 EMLS110R
 Not open to fluent speakers or writers of English
 BIOL458

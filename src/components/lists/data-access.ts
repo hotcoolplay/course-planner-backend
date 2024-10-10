@@ -2,16 +2,18 @@ import { FastifyWithTypeProvider } from "./api.js";
 
 export async function getCourses(
   fastify: FastifyWithTypeProvider,
-): Promise<Course[]> {
-  const gotList = await fastify.pg.query<Course>("SELECT * FROM courses");
+): Promise<RetrievedEntity<Course>[]> {
+  const gotList = await fastify.pg.query<RetrievedEntity<Course>>(
+    "SELECT * FROM courses",
+  );
   return gotList.rows;
 }
 
-export async function fetchCourse(
+export async function fetchCourseByCourseId(
   fastify: FastifyWithTypeProvider,
   courseid: string,
-): Promise<Course[]> {
-  const gotCourse = await fastify.pg.query<Course>(
+): Promise<RetrievedEntity<Course>[]> {
+  const gotCourse = await fastify.pg.query<RetrievedEntity<Course>>(
     `SELECT * FROM courses 
         WHERE courseid = $1`,
     [courseid],
@@ -30,19 +32,20 @@ export async function fetchCourseByTerm(
 
 export async function fetchPrograms(
   fastify: FastifyWithTypeProvider,
-): Promise<Program[]> {
-  const gotList = await fastify.pg.query<Program>("SELECT * FROM programs");
+): Promise<RetrievedEntity<Program>[]> {
+  const gotList = await fastify.pg.query<RetrievedEntity<Program>>(
+    "SELECT * FROM programs",
+  );
   return gotList.rows;
 }
 
-export async function fetchProgram(
+export async function fetchProgramById(
   fastify: FastifyWithTypeProvider,
   id: number,
-): Promise<Program> {
-  const gotProgram = await fastify.pg.query<Program>(
+): Promise<RetrievedEntity<Program>> {
+  const gotProgram = await fastify.pg.query<RetrievedEntity<Program>>(
     "SELECT * FROM programs WHERE id = $1",
     [id],
   );
-  return gotProgram.rows[0];
   return gotProgram.rows[0];
 }

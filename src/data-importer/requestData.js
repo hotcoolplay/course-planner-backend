@@ -173,7 +173,7 @@ export async function requestCourses(fastify) {
                     data[i].associatedAcademicGroupCode = "HEA";
                 console.log(data[i].subjectCode + data[i].catalogNumber);
                 const courseData = await scraper.scrapeCourse(fastify, browser, uGradPage, data[i].subjectCode, data[i].catalogNumber);
-                if (courseData.units) {
+                if (courseData.units !== null) {
                     const course = {
                         courseid: data[i].courseId,
                         title: data[i].title,
@@ -186,9 +186,9 @@ export async function requestCourses(fastify) {
                         simulEnroll: courseData.simulEnroll,
                         grading: data[i].gradingBasis,
                         description: data[i].description,
-                        prerequisites: [],
                     };
                     await db.insertCourses(fastify, course);
+                    console.log(`Inserted ${uGradCourses++} courses...`);
                 }
             }
         }

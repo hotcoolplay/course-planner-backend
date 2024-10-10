@@ -5,8 +5,6 @@ import { FastifyInstance } from "fastify";
 import puppeteer from "puppeteer-extra";
 import stealthPlugin from "puppeteer-extra-plugin-stealth";
 import adblockerPlugin from "puppeteer-extra-plugin-adblocker";
-import fs from "fs";
-import { prerequisiteTexts } from "../../app.js";
 
 interface CourseResponse {
   courseId: string;
@@ -230,7 +228,7 @@ export async function requestCourses(fastify: FastifyInstance) {
             data[i].subjectCode,
             data[i].catalogNumber,
           );
-          if (courseData.units) {
+          if (courseData.units !== null) {
             const course: Course = {
               courseid: data[i].courseId,
               title: data[i].title,
@@ -243,7 +241,6 @@ export async function requestCourses(fastify: FastifyInstance) {
               simulEnroll: courseData.simulEnroll,
               grading: data[i].gradingBasis,
               description: data[i].description,
-              prerequisites: [],
             };
             await db.insertCourses(fastify, course);
             console.log(`Inserted ${uGradCourses++} courses...`);

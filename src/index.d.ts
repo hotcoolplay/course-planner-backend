@@ -95,8 +95,17 @@ interface Course {
   grading: string;
   units: number;
   description: string;
-  prerequisites: Prerequisites[];
 }
+type RetrievedEntity<T> = T & { id: number };
+
+type RetrievedSelectedCourse = RetrievedEntity<Course> &
+  RetrievedEntity<Prerequisite>;
+
+type SelectedCourse = RetrievedEntity<Course> & {
+  prerequisites: Prerequisite[];
+};
+
+type SelectedProgram<T> = RetrievedEntity<T> & { requirements: Requirement[] };
 
 interface Term {
   name: string;

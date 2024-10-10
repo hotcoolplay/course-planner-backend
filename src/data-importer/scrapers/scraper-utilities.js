@@ -119,15 +119,17 @@ export async function convertProgramName(fastify, name) {
     }
     const majorType = identifier ? validateMajorType(identifier) : null;
     const parentMajor = identifier && !majorType && PROGRAM_INITIALS.get(identifier)
-        ? "%" + PROGRAM_INITIALS.get(identifier) + "%(%"
+        ? PROGRAM_INITIALS.get(identifier) + ""
         : null;
     if (!majorType && !parentMajor && identifier) {
         console.log(name);
         throw new Error(`I'm not sure what this identifier is...${name}`);
     }
     const programName = PROGRAM_ABBREVIATIONS.get(tempProgramName)
-        ? ("%" + PROGRAM_ABBREVIATIONS.get(tempProgramName) + "%(%").replace("&", "and")
-        : "%" + tempProgramName.replace("&", "and") + "%(%";
+        ? (PROGRAM_ABBREVIATIONS.get(tempProgramName) + "").replace("&", "and")
+        : tempProgramName === "Optometry" || tempProgramName === "Pharmacy"
+            ? tempProgramName.replace("&", "and") + "%(%"
+            : tempProgramName.replace("&", "and");
     const opts = {
         majorType: majorType,
         parentDegree: degree,

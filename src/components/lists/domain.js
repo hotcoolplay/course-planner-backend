@@ -4,7 +4,7 @@ export async function getCourseList(fastify) {
     return response;
 }
 export async function getCourse(fastify, courseid) {
-    const response = await db.fetchCourse(fastify, courseid);
+    const response = await db.fetchCourseByCourseId(fastify, courseid);
     return response;
 }
 export async function getCoursesByTerm(fastify, term) {
@@ -12,7 +12,7 @@ export async function getCoursesByTerm(fastify, term) {
     const courseList = await db.fetchCourseByTerm(fastify, termTable);
     const response = [];
     for (let i = 0; i < courseList.length; ++i) {
-        const course = await db.fetchCourse(fastify, courseList[i].courseid);
+        const course = await db.fetchCourseByCourseId(fastify, courseList[i].courseid);
         if (course != undefined) {
             for (let j = 0; j < course.length; ++j) {
                 response.push(course[j]);

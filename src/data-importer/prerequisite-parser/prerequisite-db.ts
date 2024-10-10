@@ -18,7 +18,7 @@ export async function insertParentPrerequisites(
     );
     const id = result.rows[0].id;
     await client.query(
-      `INSERT INTO course_prerequisites
+      `INSERT INTO parent_prerequisites
             VALUES($1, $2, $3, $4, $5)
             `,
       [id, prereq.amount, prereq.grade, prereq.units, prereq.programAverage],
@@ -283,22 +283,28 @@ export async function searchCourses(
 export async function searchPrograms(
   fastify: FastifyInstance,
   programName: string,
-): Promise<number[]> {
+): Promise<number[][]> {
   try {
-    const majors = await fastify.pg.query(
-      `SELECT id FROM programs
+    let query = {
+      text: `SELECT id FROM programs
           WHERE program_subtype = 'Major'
           AND name LIKE $1`,
-      [programName + "%(%"],
-    );
+      values: [
+        programName === "Arts and Business" ? programName : programName + "%(%",
+      ],
+      rowMode: "array",
+    };
+    const majors = await fastify.pg.query(query);
     if (majors.rows.length !== 0) {
       return majors.rows;
     } else {
-      const result = await fastify.pg.query(
-        `SELECT id FROM programs
-              WHERE name LIKE $1`,
-        ["%" + programName + "%"],
-      );
+      query = {
+        text: `SELECT id FROM programs
+            WHERE name LIKE $1`,
+        values: [programName],
+        rowMode: "array",
+      };
+      const result = await fastify.pg.query(query);
       return result.rows;
     }
   } catch (err) {

@@ -9,7 +9,7 @@ export async function insertParentPrerequisites(fastify, prereq) {
             prereq.requisiteSubtype,
         ]);
         const id = result.rows[0].id;
-        await client.query(`INSERT INTO course_prerequisites
+        await client.query(`INSERT INTO parent_prerequisites
             VALUES($1, $2, $3, $4, $5)
             `, [id, prereq.amount, prereq.grade, prereq.units, prereq.programAverage]);
         return id;
@@ -173,15 +173,27 @@ export async function searchCourses(fastify, subject, catalogNumber) {
 }
 export async function searchPrograms(fastify, programName) {
     try {
-        const majors = await fastify.pg.query(`SELECT id FROM programs
+        let query = {
+            text: `SELECT id FROM programs
           WHERE program_subtype = 'Major'
-          AND name LIKE $1`, [programName + "%(%"]);
+          AND name LIKE $1`,
+            values: [
+                programName === "Arts and Business" ? programName : programName + "%(%",
+            ],
+            rowMode: "array",
+        };
+        const majors = await fastify.pg.query(query);
         if (majors.rows.length !== 0) {
             return majors.rows;
         }
         else {
-            const result = await fastify.pg.query(`SELECT id FROM programs
-              WHERE name LIKE $1`, ["%" + programName + "%"]);
+            query = {
+                text: `SELECT id FROM programs
+            WHERE name LIKE $1`,
+                values: [programName],
+                rowMode: "array",
+            };
+            const result = await fastify.pg.query(query);
             return result.rows;
         }
     }
@@ -199,5 +211,32 @@ export async function searchDegrees(fastify, degreeName) {
     catch (err) {
         console.error(err);
         throw new Error(`Couldn't find ${degreeName}!`);
+    }
+}
+export async function searchFaculties(fastify, facultyName) {
+    try {
+        const result = await fastify.pg.query(`SELECT code FROM faculties
+          WHERE faculty LIKE $1`, ["%" + facultyName + "%"]);
+        return result.rows[0].code;
+    }
+    catch (err) {
+        console.error(err);
+        throw new Error(`Couldn't find ${facultyName}!`);
+    }
+}
+export async function alterPHYS242Prerequisite(fastify, parentId) {
+    try {
+        await fastify.pg.transact(async (client) => {
+            const result = await client.query(`SELECT id FROM prerequisites
+        WHERE parent_id = $1`, [parentId]);
+            const id = result.rows[0].id;
+            await client.query(`UPDATE prerequisites
+        SET requisite_type = 'coreq'
+        WHERE parent_id = $1`, [id]);
+        });
+    }
+    catch (err) {
+        console.error(err);
+        throw new Error(`Couldn't alter PHYS242!`);
     }
 }

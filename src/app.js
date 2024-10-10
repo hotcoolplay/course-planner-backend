@@ -1,4 +1,4 @@
-import courseRoute from "./components/courses/api.js";
+import courseRoute from "./components/lists/api.js";
 import { requestCourses, } from "./libs/data-importer/requestData.js";
 //import schedule from 'node-schedule'
 import envs from "./libs/setup/envs.js";

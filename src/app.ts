@@ -1,11 +1,11 @@
-import courseRoute from "./components/courses/api.js";
+import courseRoute from "./components/lists/api.js";
 import {
   requestCourses,
   requestTerms,
   requestTermCourseList,
   requestPrograms,
   requestDegrees,
-} from "./libs/data-importer/requestData.js";
+} from "./data-importer/requestData.js";
 //import schedule from 'node-schedule'
 import envs from "./libs/setup/envs.js";
 import db from "./libs/setup/db.js";
@@ -45,7 +45,7 @@ server.listen({ port: Number(process.env.PORT) }, (err, address: string) => {
   //schedule.scheduleJob('00 00 00 * *', async function(){
   //requestDegrees(server)
   //requestPrograms(server);
-  requestCourses(server);
+  //requestCourses(server);
   //requestTerms(server);
   //requestTermCourseList(server);
   //});

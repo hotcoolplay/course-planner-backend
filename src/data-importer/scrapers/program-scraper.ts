@@ -225,11 +225,17 @@ function determineMajorType(name: string): majorType {
 async function determineDegreeId(fastify: FastifyInstance, name: string) {
   // Joint Honours programs don't have their degree in their name
   if (name.includes("Joint Honours")) {
-    const majorName = name.split(" (")[0] + "%";
-    const degreeId = await db.searchDegreeId(fastify, majorName);
-    if (!degreeId)
-      throw new Error(`Couldn't find corresponding degree for ${name}!`);
-    else return degreeId;
+    if (name.includes(" - Joint Honours")) {
+      const degreeName = name.split("(")[1].split(" - Joint Honours")[0];
+      const degreeId = await db.fetchDegreeId(fastify, degreeName);
+      return degreeId;
+    } else {
+      const majorName = name.split(" (")[0] + "%";
+      const degreeId = await db.searchDegreeId(fastify, majorName);
+      if (!degreeId)
+        throw new Error(`Couldn't find corresponding degree for ${name}!`);
+      else return degreeId;
+    }
   } else {
     const degreeName = parseDegreeName(name);
     const degreeId = await db.fetchDegreeId(fastify, degreeName);
