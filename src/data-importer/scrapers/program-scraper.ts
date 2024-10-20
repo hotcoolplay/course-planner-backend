@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { Browser, Page, ElementHandle } from "puppeteer";
-import * as util from "./scraper-utilities.js";
+import * as util from "../scraper-utilities.js";
 import * as db from "./scraper-db.js";
 
 interface ProgramProperties {

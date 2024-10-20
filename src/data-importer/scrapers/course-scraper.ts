@@ -1,8 +1,8 @@
 import { FastifyInstance } from "fastify";
 import { Browser, Page, ElementHandle } from "puppeteer";
-import * as util from "./scraper-utilities.js";
+import * as util from "../scraper-utilities.js";
 import { parsePrerequisite } from "../prerequisite-parser/prerequisites.js";
-import { searchCourseIds } from "./scraper-db.js";
+import * as db from "./scraper-db.js";
 
 type CourseProperties = {
   units: number | null;
@@ -68,7 +68,7 @@ export async function scrapeCourse(
       await util.fetchSectionContent(coursePage, simulEnrollHeading, false)
     )[0];
 
-    const courseId = await searchCourseIds(fastify, subject, catalog);
+    const courseId = await db.searchCourseIds(fastify, subject, catalog);
     let coreqId = null;
     const prereq = "Prerequisites";
     const prereqNode = await util.returnElement(coursePage, prereq);

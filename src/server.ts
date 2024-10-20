@@ -1,15 +1,16 @@
-import courseRoute from "./components/lists/api.js";
-import {
-  requestCourses,
-  requestTerms,
-  requestTermCourseList,
-  requestPrograms,
-  requestDegrees,
-} from "./data-importer/requestData.js";
+import listRoutes from "./components/lists/api/api.js";
+import {} from //requestCourses,
+//requestTerms,
+//requestTermCourseList,
+//requestPrograms,
+//requestDegrees,
+"./data-importer/requestData.js";
 //import schedule from 'node-schedule'
+import cors from "@fastify/cors";
 import envs from "./libs/setup/envs.js";
 import db from "./libs/setup/db.js";
 import fastify from "fastify";
+import * as errorHandling from "./libs/error-handling/index.js";
 
 export const prerequisiteTexts = new Set();
 
@@ -18,30 +19,25 @@ const server = fastify({
 });
 
 server.register(envs).after(async function (err) {
-  if (err) console.log(err);
-  server.register(db);
-  server.register(courseRoute);
-});
-
-server.addHook("preHandler", (req, res, done) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET");
-  res.header("Access-Control-Allow-Headers", "*");
-
-  const isPreflight = /options/i.test(req.method);
-  if (isPreflight) {
-    return res.send();
+  if (err) {
+    errorHandling.errorHandler(server, err);
   }
-
-  done();
+  server.register(db);
+  server.register(listRoutes);
+  server.register(cors, {
+    origin: "*",
+    methods: ["GET"],
+  });
 });
+
+server.setErrorHandler(errorHandling.apiErrorHandler);
 
 server.listen({ port: Number(process.env.PORT) }, (err, address: string) => {
   if (err) {
     server.log.error(err);
     process.exit(1);
   }
-  console.log(`Server listening at ${address}`);
+  server.log.info(`Server listening at ${address}`);
   //schedule.scheduleJob('00 00 00 * *', async function(){
   //requestDegrees(server)
   //requestPrograms(server);

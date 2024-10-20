@@ -96,16 +96,6 @@ interface Course {
   units: number;
   description: string;
 }
-type RetrievedEntity<T> = T & { id: number };
-
-type RetrievedSelectedCourse = RetrievedEntity<Course> &
-  RetrievedEntity<Prerequisite>;
-
-type SelectedCourse = RetrievedEntity<Course> & {
-  prerequisites: Prerequisite[];
-};
-
-type SelectedProgram<T> = RetrievedEntity<T> & { requirements: Requirement[] };
 
 interface Term {
   name: string;
@@ -124,7 +114,6 @@ interface ParentPrerequisite extends Prerequisite {
   grade: number | null;
   units: number | null;
   programAverage: number | null;
-  prerequisites: Prerequisite[] | null;
 }
 
 interface CoursePrerequisite extends Prerequisite {

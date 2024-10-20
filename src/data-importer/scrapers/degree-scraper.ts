@@ -1,6 +1,6 @@
 import { Page, Browser, ElementHandle } from "puppeteer";
 import { FastifyInstance } from "fastify";
-import * as util from "./scraper-utilities.js";
+import * as util from "../scraper-utilities.js";
 
 type DegreeProperties = {
   name: string | null;

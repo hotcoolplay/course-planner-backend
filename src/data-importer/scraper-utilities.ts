@@ -1,7 +1,7 @@
 import { Page, ElementHandle } from "puppeteer";
 import { FastifyInstance } from "fastify";
-import * as db from "./scraper-db.js";
-import { IProgramSearchParams } from "./scraper-db.js";
+import * as db from "./scrapers/scraper-db.js";
+import { IProgramSearchParams } from "./scrapers/scraper-db.js";
 
 const majorTypes = ["H", "JH", "3G", "4G"] as const;
 type MajorType = (typeof majorTypes)[number];

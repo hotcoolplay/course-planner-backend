@@ -1,5 +1,5 @@
 import * as db from "./prerequisite-db.js";
-import * as util from "../scrapers/scraper-utilities.js";
+import * as util from "../scraper-utilities.js";
 export async function parsePrerequisite(fastify, requirement, requisiteType, parentPrerequisiteId, parentCourseId, coreqId) {
     // Typo cleanup
     requirement = requirement.replace(/MSC(?:i|I)/g, "MSCI");
@@ -699,5 +699,4 @@ const nullParentPrerequisite = {
     grade: null,
     units: null,
     programAverage: null,
-    prerequisites: null,
 };

@@ -1,6 +1,6 @@
 import * as db from "./prerequisite-db.js";
 import { FastifyInstance } from "fastify";
-import * as util from "../scrapers/scraper-utilities.js";
+import * as util from "../scraper-utilities.js";
 
 interface IPrerequisiteParserProperties {
   parentPrerequisiteId: number | null;
@@ -1092,5 +1092,4 @@ const nullParentPrerequisite: ParentPrerequisite = {
   grade: null,
   units: null,
   programAverage: null,
-  prerequisites: null,
 };

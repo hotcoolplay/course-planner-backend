@@ -1,11 +1,9 @@
 import { Type } from "@sinclair/typebox";
-import { courseListSchema, courseSchema } from "./course-schema.js";
-import * as domain from "./domain.js";
-import { FastifyInstance, FastifyBaseLogger } from "fastify";
-import { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
-import { IncomingMessage, Server, ServerResponse } from "node:http";
+import { courseListSchema, courseSchema } from "../domain/list-schema.js";
+import * as domain from "../domain/list-retrieval.js";
+import { FastifyWithTypeProvider } from "../../index.js";
 
-async function courseRoute(fastify: FastifyWithTypeProvider) {
+async function listRoutes(fastify: FastifyWithTypeProvider) {
   fastify.get("/courselist", {
     schema: {
       response: {
@@ -62,7 +60,7 @@ async function courseRoute(fastify: FastifyWithTypeProvider) {
   });
 }
 
-export default courseRoute;
+export default listRoutes;
 const commonHTTPResponses = {
   400: {
     description: "Bad request, please check your request body",
@@ -73,11 +71,3 @@ const commonHTTPResponses = {
     type: "null",
   },
 };
-
-export type FastifyWithTypeProvider = FastifyInstance<
-  Server<typeof IncomingMessage, typeof ServerResponse>,
-  IncomingMessage,
-  ServerResponse<IncomingMessage>,
-  FastifyBaseLogger,
-  TypeBoxTypeProvider
->;

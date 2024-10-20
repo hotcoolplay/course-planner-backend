@@ -1,2 +1,3 @@
 # courseplanner-backend
-WIP Backend for courseplanner. Built on Node.js + Fastify.
+
+WIP Backend for a UW course planner. Built on Node.js + Fastify.

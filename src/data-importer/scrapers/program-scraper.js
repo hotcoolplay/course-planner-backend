@@ -1,4 +1,4 @@
-import * as util from "./scraper-utilities.js";
+import * as util from "../scraper-utilities.js";
 import * as db from "./scraper-db.js";
 export async function scrapePrograms(fastify, browser, link) {
     const programPage = await browser.newPage();

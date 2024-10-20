@@ -1,6 +1,6 @@
-import * as util from "./scraper-utilities.js";
+import * as util from "../scraper-utilities.js";
 import { parsePrerequisite } from "../prerequisite-parser/prerequisites.js";
-import { searchCourseIds } from "./scraper-db.js";
+import * as db from "./scraper-db.js";
 export async function scrapeCourse(fastify, browser, page, subject, catalog) {
     if (subject === "MSCI")
         subject = "MSE";
@@ -39,7 +39,7 @@ export async function scrapeCourse(fastify, browser, page, subject, catalog) {
         const completions = (await util.fetchSectionContent(coursePage, completionsHeading, false))[0];
         const simulEnrollHeading = "Allow Multiple Enrol in a Term";
         const simulEnroll = (await util.fetchSectionContent(coursePage, simulEnrollHeading, false))[0];
-        const courseId = await searchCourseIds(fastify, subject, catalog);
+        const courseId = await db.searchCourseIds(fastify, subject, catalog);
         let coreqId = null;
         const prereq = "Prerequisites";
         const prereqNode = await util.returnElement(coursePage, prereq);
