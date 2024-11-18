@@ -5,7 +5,6 @@
 !.yarn/sdks
 !.yarn/versions
 .env
-src/libs/data-importer/prerequisite-parser/*.txt
 /**/*.js
 
 # Swap the comments on the following lines if you wish to use zero-installs

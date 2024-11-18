@@ -1,18 +1,17 @@
 import listRoutes from "./components/lists/api/api.js";
-import {} from //requestCourses,
-//requestTerms,
-//requestTermCourseList,
-//requestPrograms,
-//requestDegrees,
-"./data-importer/requestData.js";
+import {
+  //requestPrograms,
+  requestCourses,
+  //requestTerms,
+  //requestTermCourseList,
+  //requestDegrees,
+} from "./data-importer/data-scraper.js";
 //import schedule from 'node-schedule'
 import cors from "@fastify/cors";
 import envs from "./libs/setup/envs.js";
 import db from "./libs/setup/db.js";
 import fastify from "fastify";
 import * as errorHandling from "./libs/error-handling/index.js";
-
-export const prerequisiteTexts = new Set();
 
 const server = fastify({
   logger: true,
@@ -41,7 +40,7 @@ server.listen({ port: Number(process.env.PORT) }, (err, address: string) => {
   //schedule.scheduleJob('00 00 00 * *', async function(){
   //requestDegrees(server)
   //requestPrograms(server);
-  //requestCourses(server);
+  requestCourses(server);
   //requestTerms(server);
   //requestTermCourseList(server);
   //});

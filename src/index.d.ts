@@ -25,14 +25,11 @@ interface Degree {
 
 interface Requirement {
   id: number;
-  amount: number | null;
   requirementType: requirementType;
   requirementSubtype: requirementSubtype;
-  degreeID: number | null;
-  programID: number | null;
-  childRequirements: Requirement[] | null;
+  degreeId: number | null;
+  programId: number | null;
   antirequirement: boolean;
-  courses: PseudoCourse[] | null;
 }
 
 interface UnitRequirement extends Requirement {
@@ -52,14 +49,27 @@ interface BreadthRequirement extends Requirement {
   units: number;
 }
 
-interface CommunicationRequirement extends Requirement {
-  term: string | null;
-  grade: number | null;
+interface CourseRequirement extends Requirement {
+  parentId: number | null;
+  courseId: number;
 }
 
-interface CourseRequirement extends Requirement {
+interface ParentCourseRequirement extends Requirement {
+  parentId: number | null;
+  term: string | null;
+  grade: number | null;
   units: number | null;
-  average: number | null;
+  amount: number | null;
+  isUCR: boolean;
+}
+
+interface PseudoCourseRequirement extends Requirement {
+  parentId: number | null;
+  subject: string | null;
+  catalogNumber: string | null;
+  minCatalogNumber: number | null;
+  maxCatalogNumber: number | null;
+  component: string | null;
 }
 
 interface DepthRequirement extends Requirement {
@@ -67,24 +77,25 @@ interface DepthRequirement extends Requirement {
   prereqLength: number | null;
 }
 
-interface PdRequirement extends Requirement {
-  catalogNumber: string | null;
-  term: string | null;
-}
-
 interface WorkRequirement extends Requirement {
   workTerms: number;
   workType: workType;
 }
 
-interface CourseList {
+interface CourseListRequirement extends Requirement {
+  parentId: number | null;
   name: string | null;
-  courseLists: CourseList[] | null;
-  courses: Course[] | null;
+}
+
+interface Sequence {
+  name: string | null;
+  sequence: string[];
+  majorId: number | null;
+  degreeId: number | null;
 }
 
 interface Course {
-  subjectcode: string;
+  subject: string;
   catalogNumber: string;
   title: string;
   courseid: string;
@@ -182,16 +193,16 @@ type programSubtype =
 type requirementType =
   | "average"
   | "breadth"
-  | "communication"
+  | "courseList"
   | "course"
   | "depth"
-  | "pd"
+  | "parentCourse"
   | "term"
   | "time"
   | "unit"
   | "work"
-  | "requirement";
-type requirementSubtype = "Declaration" | "Graduation";
+  | "pseudoCourse";
+type requirementSubtype = "Declaration" | "Graduation" | "Coop";
 type majorType = "H" | "JH" | "3G" | "4G";
 type unitType = "failed" | "unusable" | "minimum";
 type workType = "Standard" | "Flexible";

@@ -1,4 +1,4 @@
-import { ServerError } from "./server-error";
+import { ServerError } from "./server-error.js";
 import { FastifyInstance, FastifyRequest } from "fastify";
 
 export function errorHandler(
@@ -9,7 +9,7 @@ export function errorHandler(
     fastify.log.info("Attempting to handle error...");
     const serverError = convertErrorToServerError(error);
     fastify.log.error(serverError.message);
-    if (serverError.isFatal) process.exit();
+    if (serverError.isFatal) process.exit(1);
     return serverError.HttpStatus;
   } catch (handlingError: unknown) {
     console.error("Couldn't handle error! Info to be displayed...");
@@ -34,8 +34,10 @@ export function convertErrorToServerError(error: unknown): ServerError {
     "HTTPStatus" in errorObject && typeof errorObject.HTTPStatus == "number"
       ? errorObject.HTTPStatus
       : 500;
-  const stack = "stack" in errorObject ? errorObject.stack : undefined;
+  const stack =
+    "stack" in errorObject ? (errorObject.stack as string) : undefined;
   const isFatal = true;
-  const serverError = new ServerError(name, message, code, isFatal, stack);
+  const serverError = new ServerError(name, message, code, isFatal);
+  serverError.stack = stack;
   return serverError;
 }
