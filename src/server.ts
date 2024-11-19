@@ -1,12 +1,4 @@
 import listRoutes from "./components/lists/api/api.js";
-import {
-  //requestPrograms,
-  requestCourses,
-  //requestTerms,
-  //requestTermCourseList,
-  //requestDegrees,
-} from "./data-importer/data-scraper.js";
-//import schedule from 'node-schedule'
 import cors from "@fastify/cors";
 import envs from "./libs/setup/envs.js";
 import db from "./libs/setup/db.js";
@@ -37,11 +29,4 @@ server.listen({ port: Number(process.env.PORT) }, (err, address: string) => {
     process.exit(1);
   }
   server.log.info(`Server listening at ${address}`);
-  //schedule.scheduleJob('00 00 00 * *', async function(){
-  //requestDegrees(server)
-  //requestPrograms(server);
-  requestCourses(server);
-  //requestTerms(server);
-  //requestTermCourseList(server);
-  //});
 });

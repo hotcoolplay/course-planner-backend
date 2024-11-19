@@ -3,7 +3,7 @@ import fe from "@fastify/env";
 const setupOptions = {
     schema: {
         type: "object",
-        required: ["DB_PORT", "DB_ID", "DB_PWD", "DB_NAME", "UW_API_KEY_V3"],
+        required: ["PORT", "DB_ID", "DB_PWD", "DB_NAME"],
         properties: {
             PORT: {
                 type: "string",
@@ -16,9 +16,6 @@ const setupOptions = {
                 type: "string",
             },
             DATABASE_NAME: {
-                type: "string",
-            },
-            API_KEY: {
                 type: "string",
             },
         },

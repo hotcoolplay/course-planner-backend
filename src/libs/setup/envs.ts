@@ -5,7 +5,7 @@ import fe from "@fastify/env";
 const setupOptions = {
   schema: {
     type: "object",
-    required: ["DB_PORT", "DB_ID", "DB_PWD", "DB_NAME"],
+    required: ["PORT", "DB_ID", "DB_PWD", "DB_NAME"],
     properties: {
       PORT: {
         type: "string",
