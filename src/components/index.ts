@@ -19,8 +19,8 @@ export type CourseWithPrerequisites = RetrievedEntity<Course> & {
   prerequisites: RetrievedEntity<Prerequisite>[];
 };
 
-export type SelectedProgram = RetrievedEntity<Program> & {
-  requirements: Requirement[];
+export type SelectedMajor = RetrievedEntity<Major> & {
+  sequences: Sequence[];
 };
 
 export type RetrievedParentPrerequisite =

@@ -228,22 +228,49 @@ export async function fetchCourseByTerm(
   return gotCourseList.rows;
 }
 
-export async function fetchPrograms(
+export async function fetchMajors(
   fastify: FastifyWithTypeProvider,
-): Promise<RetrievedEntity<Program>[]> {
-  const gotList = await fastify.pg.query<RetrievedEntity<Program>>(
-    'SELECT id, name, program_subtype AS "programSubtype" FROM programs',
+): Promise<RetrievedEntity<Major>[]> {
+  const gotList = await fastify.pg.query<RetrievedEntity<Major>>(
+    `SELECT id, name, program_subtype AS "programSubtype", degree_id AS "degreeId" \
+    major_type AS "majorType", regular, coop FROM programs
+    INNER JOIN majors
+    USING (id)`,
   );
   return gotList.rows;
 }
 
-export async function fetchProgramById(
+export async function fetchMajorById(
   fastify: FastifyWithTypeProvider,
   id: number,
-): Promise<RetrievedEntity<Program>> {
-  const gotProgram = await fastify.pg.query<RetrievedEntity<Program>>(
-    'SELECT id, name, program_subtype AS "programSubtype" FROM programs WHERE id = $1',
+): Promise<RetrievedEntity<Major>> {
+  const gotMajor = await fastify.pg.query<RetrievedEntity<Major>>(
+    `SELECT id, name, program_subtype AS "programSubtype", degree_id AS "degreeId" \
+    major_type AS "majorType", regular, coop FROM programs
+    INNER JOIN majors
+    USING (id)
+    WHERE id = $1`,
     [id],
   );
-  return gotProgram.rows[0];
+  return gotMajor.rows[0];
+}
+
+export async function fetchMajorSequences(
+  fastify: FastifyWithTypeProvider,
+  majorId: number,
+  degreeId: number,
+): Promise<Sequence[]> {
+  let gotSequences = await fastify.pg.query<Sequence>(
+    `SELECT name, sequence FROM programs
+    WHERE major_id = $1`,
+    [majorId],
+  );
+  if (!gotSequences.rows) {
+    gotSequences = await fastify.pg.query<Sequence>(
+      `SELECT name, sequence FROM programs
+      WHERE degree_id = $1`,
+      [degreeId],
+    );
+  }
+  return gotSequences.rows;
 }

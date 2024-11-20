@@ -1,9 +1,6 @@
 import * as db from "../data-access/data-access.js";
 import { attachPrerequisiteToCourse } from "./attach-prerequisites.js";
-import {
-  FastifyWithTypeProvider,
-  CourseWithPrerequisites,
-} from "../../index.js";
+import { FastifyWithTypeProvider, SelectedMajor } from "../../index.js";
 
 export async function getCourseList(fastify: FastifyWithTypeProvider) {
   const courseList = await db.getCourses(fastify);
@@ -15,6 +12,14 @@ export async function getCourse(
   courseid: string,
 ) {
   const response = await db.fetchCourseByCourseId(fastify, courseid);
+  return response;
+}
+
+export async function getSelectedCourse(
+  fastify: FastifyWithTypeProvider,
+  id: number,
+) {
+  const response = await attachPrerequisiteToCourse(fastify, id);
   return response;
 }
 
@@ -36,5 +41,24 @@ export async function getCoursesByTerm(
       }
     }
   }
+  return response;
+}
+
+export async function getMajors(fastify: FastifyWithTypeProvider) {
+  const majorList = await db.fetchMajors(fastify);
+  return majorList;
+}
+
+export async function getSelectedMajor(
+  fastify: FastifyWithTypeProvider,
+  id: number,
+) {
+  const major = await db.fetchMajorById(fastify, id);
+  const sequences = await db.fetchMajorSequences(
+    fastify,
+    major.id,
+    major.degreeId,
+  );
+  const response: SelectedMajor = { ...major, sequences: sequences };
   return response;
 }

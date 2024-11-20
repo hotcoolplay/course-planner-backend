@@ -1,7 +1,6 @@
 interface Program {
   name: string;
   programSubtype: programSubtype;
-  urlCode: string;
 }
 
 interface Major extends Program {
@@ -90,8 +89,6 @@ interface CourseListRequirement extends Requirement {
 interface Sequence {
   name: string | null;
   sequence: string[];
-  majorId: number | null;
-  degreeId: number | null;
 }
 
 interface Course {

@@ -19,16 +19,19 @@ const requisiteSubtype = Type.Union([
   Type.Literal("majorAverage"),
 ]);
 
+const programSubtype = Type.Union([
+  Type.Literal("Diploma"),
+  Type.Literal("Major"),
+  Type.Literal("Minor"),
+  Type.Literal("Option"),
+  Type.Literal("Specialization"),
+]);
+
 const majorType = Type.Union([
   Type.Literal("H"),
   Type.Literal("JH"),
   Type.Literal("3G"),
   Type.Literal("4G"),
-]);
-
-const majorSystem = Type.Union([
-  Type.Literal("Regular"),
-  Type.Literal("Co-operative"),
 ]);
 
 const prerequisiteSchema = Type.Object({
@@ -37,88 +40,6 @@ const prerequisiteSchema = Type.Object({
   requisiteType: requisiteType,
   requisiteSubtype: requisiteSubtype,
 });
-
-const parentPrerequisiteSchema = Type.Composite([
-  prerequisiteSchema,
-  Type.Object({
-    amount: Type.Union([Type.Number(), Type.Null()]),
-    grade: Type.Union([Type.Number(), Type.Null()]),
-    units: Type.Union([Type.Number(), Type.Null()]),
-    programAverage: Type.Union([Type.Number(), Type.Null()]),
-    prerequisites: Type.Union([Type.Array(prerequisiteSchema), Type.Null()]),
-  }),
-]);
-
-const coursePrerequisiteSchema = Type.Composite([
-  prerequisiteSchema,
-  Type.Object({
-    courseId: Type.Number(),
-  }),
-]);
-
-const programPrerequisiteSchema = Type.Composite([
-  prerequisiteSchema,
-  Type.Object({
-    programId: Type.Number(),
-  }),
-]);
-
-const levelPrerequisiteSchema = Type.Composite([
-  prerequisiteSchema,
-  Type.Object({
-    level: Type.String(),
-  }),
-]);
-
-const otherPrerequisiteSchema = Type.Composite([
-  prerequisiteSchema,
-  Type.Object({
-    other: Type.String(),
-  }),
-]);
-
-const pseudoCoursePrerequisiteSchema = Type.Composite([
-  prerequisiteSchema,
-  Type.Object({
-    subject: Type.Union([Type.String(), Type.Null()]),
-    catalogNumber: Type.Union([Type.String(), Type.Null()]),
-    minCatalogNumber: Type.Union([Type.Number(), Type.Null()]),
-    maxCatalogNumber: Type.Union([Type.Number(), Type.Null()]),
-    topic: Type.Union([Type.String(), Type.Null()]),
-    term: Type.Union([Type.String(), Type.Null()]),
-    component: Type.Union([Type.String(), Type.Null()]),
-  }),
-]);
-
-const cumulativeAveragePrerequisiteSchema = Type.Composite([
-  prerequisiteSchema,
-  Type.Object({
-    cumulativeAverage: Type.Number(),
-  }),
-]);
-
-const majorAveragePrerequisiteSchema = Type.Composite([
-  prerequisiteSchema,
-  Type.Object({
-    majorAverage: Type.Number(),
-  }),
-]);
-
-const pseudoProgramPrerequisiteSchema = Type.Composite([
-  prerequisiteSchema,
-  Type.Object({
-    faculty: Type.Union([Type.String(), Type.Null()]),
-    majorType: Type.Union([majorType, Type.Null()]),
-    majorSystem: Type.Union([majorSystem, Type.Null()]),
-  }),
-]);
-
-const degreePrerequisiteSchema = Type.Composite([
-  prerequisiteSchema,
-  Type.Object({
-    degreeId: Type.Number(),
-  }),
-]);
 
 export const courseSchema = Type.Object({
   id: Type.Number(),
@@ -135,4 +56,53 @@ export const courseSchema = Type.Object({
   description: Type.String(),
 });
 
+export const selectedCourseSchema = Type.Object({
+  id: Type.Number(),
+  subject: Type.String(),
+  catalogNumber: Type.String(),
+  title: Type.String(),
+  courseid: Type.String(),
+  units: Type.Number(),
+  faculty: Type.String(),
+  component: Type.String(),
+  completions: Type.Number(),
+  simulEnroll: Type.Boolean(),
+  grading: Type.String(),
+  description: Type.String(),
+  prerequisites: prerequisiteSchema,
+});
+
 export const courseListSchema = Type.Array(courseSchema);
+
+export const programSchema = Type.Object({
+  name: Type.String(),
+  programSubtype: programSubtype,
+});
+
+const sequenceSchema = Type.Object({
+  name: Type.Union([Type.String(), Type.Null()]),
+  sequence: Type.Array(Type.String()),
+});
+
+export const majorSchema = Type.Composite([
+  programSchema,
+  Type.Object({
+    degreeId: Type.Number(),
+    majorType: majorType,
+    regular: Type.Boolean(),
+    coop: Type.Boolean(),
+  }),
+]);
+
+export const selectedMajorSchema = Type.Composite([
+  programSchema,
+  Type.Object({
+    degreeId: Type.Number(),
+    majorType: majorType,
+    regular: Type.Boolean(),
+    coop: Type.Boolean(),
+    sequences: Type.Array(sequenceSchema),
+  }),
+]);
+
+export const majorListSchema = Type.Array(majorSchema);
