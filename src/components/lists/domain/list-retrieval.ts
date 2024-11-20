@@ -7,11 +7,7 @@ import {
 
 export async function getCourseList(fastify: FastifyWithTypeProvider) {
   const courseList = await db.getCourses(fastify);
-  const response: CourseWithPrerequisites[] = [];
-  for (const course of courseList) {
-    response.push(await attachPrerequisiteToCourse(fastify, course.id));
-  }
-  return response;
+  return courseList;
 }
 
 export async function getCourse(
@@ -28,7 +24,7 @@ export async function getCoursesByTerm(
 ) {
   const termTable = term.replace("-", "_");
   const courseList = await db.fetchCourseByTerm(fastify, termTable);
-  const response: CourseWithPrerequisites[] = [];
+  const response: Course[] = [];
   for (const crossLists of courseList) {
     const courses = await db.fetchCourseByCourseId(
       fastify,
@@ -36,7 +32,7 @@ export async function getCoursesByTerm(
     );
     if (courses != undefined) {
       for (const course of courses) {
-        response.push(await attachPrerequisiteToCourse(fastify, course.id));
+        response.push(course);
       }
     }
   }

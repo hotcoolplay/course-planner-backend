@@ -73,40 +73,24 @@ async function retrieveJoinedPrerequisites(
 ) {
   switch (type) {
     case "parent":
-      return await db.joinPrerequisite<ParentPrerequisite>(fastify, type, id);
+      return await db.joinParentPrerequisite(fastify, id);
     case "other":
-      return await db.joinPrerequisite<OtherPrerequisite>(fastify, type, id);
+      return await db.joinOtherPrerequisite(fastify, id);
     case "course":
-      return await db.joinPrerequisite<CoursePrerequisite>(fastify, type, id);
+      return await db.joinCoursePrerequisite(fastify, id);
     case "program":
-      return await db.joinPrerequisite<ProgramPrerequisite>(fastify, type, id);
+      return await db.joinProgramPrerequisite(fastify, id);
     case "degree":
-      return await db.joinPrerequisite<DegreePrerequisite>(fastify, type, id);
+      return await db.joinDegreePrerequisite(fastify, id);
     case "level":
-      return await db.joinPrerequisite<LevelPrerequisite>(fastify, type, id);
+      return await db.joinLevelPrerequisite(fastify, id);
     case "pseudoCourse":
-      return await db.joinPrerequisite<PseudoCoursePrerequisite>(
-        fastify,
-        type,
-        id,
-      );
+      return await db.joinPseudoCoursePrerequisite(fastify, id);
     case "pseudoProgram":
-      return await db.joinPrerequisite<PseudoProgramPrerequisite>(
-        fastify,
-        type,
-        id,
-      );
+      return await db.joinPseudoProgramPrerequisite(fastify, id);
     case "cumulativeAverage":
-      return await db.joinPrerequisite<CumulativeAveragePrerequisite>(
-        fastify,
-        type,
-        id,
-      );
+      return await db.joinCumulativeAveragePrerequisite(fastify, id);
     case "majorAverage":
-      return await db.joinPrerequisite<MajorAveragePrerequisite>(
-        fastify,
-        type,
-        id,
-      );
+      return await db.joinMajorAveragePrerequisite(fastify, id);
   }
 }

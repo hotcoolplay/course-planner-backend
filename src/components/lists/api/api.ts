@@ -61,6 +61,7 @@ async function listRoutes(fastify: FastifyWithTypeProvider) {
 }
 
 export default listRoutes;
+
 const commonHTTPResponses = {
   400: {
     description: "Bad request, please check your request body",

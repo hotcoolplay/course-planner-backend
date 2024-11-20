@@ -9,6 +9,7 @@ export function errorHandler(
     fastify.log.info("Attempting to handle error...");
     const serverError = convertErrorToServerError(error);
     fastify.log.error(serverError.message);
+    fastify.log.error(serverError.stack);
     if (serverError.isFatal) process.exit(1);
     return serverError.HttpStatus;
   } catch (handlingError: unknown) {

@@ -34,7 +34,6 @@ const majorSystem = Type.Union([
 const prerequisiteSchema = Type.Object({
   id: Type.Number(),
   parentPrerequisiteSchemaId: Type.Union([Type.Number(), Type.Null()]),
-  parentCourseId: Type.Union([Type.Number(), Type.Null()]),
   requisiteType: requisiteType,
   requisiteSubtype: requisiteSubtype,
 });
@@ -126,7 +125,7 @@ export const courseSchema = Type.Object({
   subject: Type.String(),
   catalogNumber: Type.String(),
   title: Type.String(),
-  courseId: Type.String(),
+  courseid: Type.String(),
   units: Type.Number(),
   faculty: Type.String(),
   component: Type.String(),
@@ -134,7 +133,6 @@ export const courseSchema = Type.Object({
   simulEnroll: Type.Boolean(),
   grading: Type.String(),
   description: Type.String(),
-  prerequisites: Type.Array(prerequisiteSchema),
 });
 
 export const courseListSchema = Type.Array(courseSchema);

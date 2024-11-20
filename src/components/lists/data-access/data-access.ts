@@ -5,7 +5,9 @@ export async function getCourses(
   fastify: FastifyWithTypeProvider,
 ): Promise<RetrievedEntity<Course>[]> {
   const gotList = await fastify.pg.query<RetrievedEntity<Course>>(
-    "SELECT * FROM courses",
+    'SELECT id, subject, catalog_number AS "catalogNumber", courseid, units, faculty, \
+    component, completions, simultaneous_enrollment AS "simulEnroll", grading, title, \
+    description FROM courses',
   );
   return gotList.rows;
 }
@@ -16,10 +18,10 @@ export async function getPrerequisites(
 ): Promise<RetrievedEntity<Prerequisite>[]> {
   const result = await fastify.pg.query<RetrievedEntity<Prerequisite>>(
     `WITH RECURSIVE prereqs AS (
-	SELECT pe.* FROM prerequisites AS pe
+	SELECT pe.id, pe.parent_id AS "parentId", pe.requisite_type AS "requisiteType", pe.requisite_subtype AS "requisiteSubtype" FROM prerequisites pe
 	WHERE pe.course_id = $1
 	UNION ALL
-	SELECT pr.* FROM prerequisites pr
+	SELECT pr.id, pr.parent_id AS "parentId", pr.requisite_type AS "requisiteType", pr.requisite_subtype AS "requisiteSubtype" FROM prerequisites pr
 	INNER JOIN prereqs pq 
 	ON pq.id = pr.parent_id
     )
@@ -29,21 +31,163 @@ export async function getPrerequisites(
   return result.rows;
 }
 
-export async function joinPrerequisite<T>(
+export async function joinParentPrerequisite(
   fastify: FastifyWithTypeProvider,
-  type: requisiteSubtype,
   prerequisiteId: number,
-): Promise<RetrievedEntity<T>> {
-  const tableName = type.match(/[A-Z]/)
-    ? `${type.split(/[A-Z]/)[0]}_${type.split(/[A-Z]/)[1]}_prerequisites`
-    : `${type}_prerequisites`;
-  const query = `SELECT * FROM prerequisites
-    INNER JOIN ${tableName}
+): Promise<RetrievedEntity<ParentPrerequisite>> {
+  const query = `SELECT id, parent_id AS "parentId", requisite_type AS "requisiteType", \
+  requisite_subtype AS "requisiteSubtype", amount, grade, units, \
+  program_average AS "programAverage" FROM prerequisites
+    INNER JOIN parent_prerequisites
     USING (id)
     WHERE prerequisites.id = $1`;
-  const result = await fastify.pg.query<RetrievedEntity<T>>(query, [
-    prerequisiteId,
-  ]);
+  const result = await fastify.pg.query<RetrievedEntity<ParentPrerequisite>>(
+    query,
+    [prerequisiteId],
+  );
+  return result.rows[0];
+}
+
+export async function joinOtherPrerequisite(
+  fastify: FastifyWithTypeProvider,
+  prerequisiteId: number,
+): Promise<RetrievedEntity<OtherPrerequisite>> {
+  const query = `SELECT id, parent_id AS "parentId", requisite_type AS "requisiteType", \
+  requisite_subtype AS "requisiteSubtype", prerequisite FROM prerequisites
+    INNER JOIN other_prerequisites
+    USING (id)
+    WHERE prerequisites.id = $1`;
+  const result = await fastify.pg.query<RetrievedEntity<OtherPrerequisite>>(
+    query,
+    [prerequisiteId],
+  );
+  return result.rows[0];
+}
+
+export async function joinCoursePrerequisite(
+  fastify: FastifyWithTypeProvider,
+  prerequisiteId: number,
+): Promise<RetrievedEntity<CoursePrerequisite>> {
+  const query = `SELECT pr.id, pr.parent_id AS "parentId", pr.requisite_type AS "requisiteType", \
+  pr.requisite_subtype AS "requisiteSubtype", cp.course_id AS "courseId" FROM prerequisites pr
+    INNER JOIN course_prerequisites cp
+    ON pr.id = cp.id
+    WHERE pr.id = $1`;
+  const result = await fastify.pg.query<RetrievedEntity<CoursePrerequisite>>(
+    query,
+    [prerequisiteId],
+  );
+  return result.rows[0];
+}
+
+export async function joinProgramPrerequisite(
+  fastify: FastifyWithTypeProvider,
+  prerequisiteId: number,
+): Promise<RetrievedEntity<ProgramPrerequisite>> {
+  const query = `SELECT id, parent_id AS "parentId", requisite_type AS "requisiteType", \
+  requisite_subtype AS "requisiteSubtype", program_id AS "programId" FROM prerequisites
+    INNER JOIN program_prerequisites
+    USING (id)
+    WHERE prerequisites.id = $1`;
+  const result = await fastify.pg.query<RetrievedEntity<ProgramPrerequisite>>(
+    query,
+    [prerequisiteId],
+  );
+  return result.rows[0];
+}
+
+export async function joinDegreePrerequisite(
+  fastify: FastifyWithTypeProvider,
+  prerequisiteId: number,
+): Promise<RetrievedEntity<DegreePrerequisite>> {
+  const query = `SELECT id, parent_id AS "parentId", requisite_type AS "requisiteType", \
+  requisite_subtype AS "requisiteSubtype", degree_id AS "degreeId" FROM prerequisites
+    INNER JOIN degree_prerequisites
+    USING (id)
+    WHERE prerequisites.id = $1`;
+  const result = await fastify.pg.query<RetrievedEntity<DegreePrerequisite>>(
+    query,
+    [prerequisiteId],
+  );
+  return result.rows[0];
+}
+
+export async function joinLevelPrerequisite(
+  fastify: FastifyWithTypeProvider,
+  prerequisiteId: number,
+): Promise<RetrievedEntity<LevelPrerequisite>> {
+  const query = `SELECT id, parent_id AS "parentId", requisite_type AS "requisiteType", \
+  requisite_subtype AS "requisiteSubtype", level FROM prerequisites
+    INNER JOIN level_prerequisites
+    USING (id)
+    WHERE prerequisites.id = $1`;
+  const result = await fastify.pg.query<RetrievedEntity<LevelPrerequisite>>(
+    query,
+    [prerequisiteId],
+  );
+  return result.rows[0];
+}
+
+export async function joinPseudoCoursePrerequisite(
+  fastify: FastifyWithTypeProvider,
+  prerequisiteId: number,
+): Promise<RetrievedEntity<PseudoCoursePrerequisite>> {
+  const query = `SELECT id, parent_id AS "parentId", requisite_type AS "requisiteType", \
+  requisite_subtype AS "requisiteSubtype", subject, catalog_number AS "catalogNumber", \
+  min_catalog_number AS "minCatalogNumber", max_catalog_number AS "maxCatalogNumber", \
+  topic, term, component FROM prerequisites
+    INNER JOIN pseudo_course_prerequisites
+    USING (id)
+    WHERE prerequisites.id = $1`;
+  const result = await fastify.pg.query<
+    RetrievedEntity<PseudoCoursePrerequisite>
+  >(query, [prerequisiteId]);
+  return result.rows[0];
+}
+
+export async function joinPseudoProgramPrerequisite(
+  fastify: FastifyWithTypeProvider,
+  prerequisiteId: number,
+): Promise<RetrievedEntity<PseudoProgramPrerequisite>> {
+  const query = `SELECT id, parent_id AS "parentId", requisite_type AS "requisiteType", \
+  requisite_subtype AS "requisiteSubtype", faculty, major_type AS "majorType", \
+  major_system AS "majorSystem" FROM prerequisites
+    INNER JOIN pseudo_program_prerequisites
+    USING (id)
+    WHERE prerequisites.id = $1`;
+  const result = await fastify.pg.query<
+    RetrievedEntity<PseudoProgramPrerequisite>
+  >(query, [prerequisiteId]);
+  return result.rows[0];
+}
+
+export async function joinCumulativeAveragePrerequisite(
+  fastify: FastifyWithTypeProvider,
+  prerequisiteId: number,
+): Promise<RetrievedEntity<CumulativeAveragePrerequisite>> {
+  const query = `SELECT id, parent_id AS "parentId", requisite_type AS "requisiteType", \
+  requisite_subtype AS "requisiteSubtype", average FROM prerequisites
+    INNER JOIN cumulative_average_prerequisites
+    USING (id)
+    WHERE prerequisites.id = $1`;
+  const result = await fastify.pg.query<
+    RetrievedEntity<CumulativeAveragePrerequisite>
+  >(query, [prerequisiteId]);
+  return result.rows[0];
+}
+
+export async function joinMajorAveragePrerequisite(
+  fastify: FastifyWithTypeProvider,
+  prerequisiteId: number,
+): Promise<RetrievedEntity<MajorAveragePrerequisite>> {
+  const query = `SELECT id, parent_id AS "parentId", requisite_type AS "requisiteType", \
+  requisite_subtype AS "requisiteSubtype", major_average AS "majorAverage" FROM prerequisites
+    INNER JOIN major_average_prerequisites
+    USING (id)
+    WHERE prerequisites.id = $1`;
+  const result = await fastify.pg.query<
+    RetrievedEntity<MajorAveragePrerequisite>
+  >(query, [prerequisiteId]);
   return result.rows[0];
 }
 
@@ -52,7 +196,9 @@ export async function fetchCourseById(
   id: number,
 ): Promise<RetrievedEntity<Course>> {
   const gotCourse = await fastify.pg.query<RetrievedEntity<Course>>(
-    `SELECT * FROM courses 
+    `SELECT id, subject, catalog_number AS "catalogNumber", courseid, units, faculty, \
+    component, completions, simultaneous_enrollment AS "simulEnroll", grading, title, \
+    description FROM courses 
         WHERE id = $1`,
     [id],
   );
@@ -64,7 +210,9 @@ export async function fetchCourseByCourseId(
   courseid: string,
 ): Promise<RetrievedEntity<Course>[]> {
   const gotCourse = await fastify.pg.query<RetrievedEntity<Course>>(
-    `SELECT * FROM courses 
+    `SELECT id, subject, catalog_number AS "catalogNumber", courseid, units, faculty, \
+    component, completions, simultaneous_enrollment AS "simulEnroll", grading, title, \
+    description FROM courses 
         WHERE courseid = $1`,
     [courseid],
   );
@@ -84,7 +232,7 @@ export async function fetchPrograms(
   fastify: FastifyWithTypeProvider,
 ): Promise<RetrievedEntity<Program>[]> {
   const gotList = await fastify.pg.query<RetrievedEntity<Program>>(
-    "SELECT * FROM programs",
+    'SELECT id, name, program_subtype AS "programSubtype" FROM programs',
   );
   return gotList.rows;
 }
@@ -94,7 +242,7 @@ export async function fetchProgramById(
   id: number,
 ): Promise<RetrievedEntity<Program>> {
   const gotProgram = await fastify.pg.query<RetrievedEntity<Program>>(
-    "SELECT * FROM programs WHERE id = $1",
+    'SELECT id, name, program_subtype AS "programSubtype" FROM programs WHERE id = $1',
     [id],
   );
   return gotProgram.rows[0];
