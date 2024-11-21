@@ -20,6 +20,7 @@ export type CourseWithPrerequisites = RetrievedEntity<Course> & {
 };
 
 export type SelectedMajor = RetrievedEntity<Major> & {
+  extensions: RetrievedEntity<Program>[];
   sequences: Sequence[];
 };
 

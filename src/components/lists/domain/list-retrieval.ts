@@ -59,6 +59,15 @@ export async function getSelectedMajor(
     major.id,
     major.degreeId,
   );
-  const response: SelectedMajor = { ...major, sequences: sequences };
+  const extensions = await db.fetchMajorExtensions(
+    fastify,
+    major.id,
+    major.degreeId,
+  );
+  const response: SelectedMajor = {
+    ...major,
+    sequences: sequences,
+    extensions: extensions,
+  };
   return response;
 }

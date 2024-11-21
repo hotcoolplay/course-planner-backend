@@ -232,7 +232,7 @@ export async function fetchMajors(
   fastify: FastifyWithTypeProvider,
 ): Promise<RetrievedEntity<Major>[]> {
   const gotList = await fastify.pg.query<RetrievedEntity<Major>>(
-    `SELECT id, name, program_subtype AS "programSubtype", degree_id AS "degreeId" \
+    `SELECT id, name, program_subtype AS "programSubtype", degree_id AS "degreeId", \
     major_type AS "majorType", regular, coop FROM programs
     INNER JOIN majors
     USING (id)`,
@@ -245,7 +245,7 @@ export async function fetchMajorById(
   id: number,
 ): Promise<RetrievedEntity<Major>> {
   const gotMajor = await fastify.pg.query<RetrievedEntity<Major>>(
-    `SELECT id, name, program_subtype AS "programSubtype", degree_id AS "degreeId" \
+    `SELECT id, name, program_subtype AS "programSubtype", degree_id AS "degreeId", \
     major_type AS "majorType", regular, coop FROM programs
     INNER JOIN majors
     USING (id)
@@ -260,17 +260,48 @@ export async function fetchMajorSequences(
   majorId: number,
   degreeId: number,
 ): Promise<Sequence[]> {
-  let gotSequences = await fastify.pg.query<Sequence>(
+  let sequences = await fastify.pg.query<Sequence>(
     `SELECT name, sequence FROM programs
     WHERE major_id = $1`,
     [majorId],
   );
-  if (!gotSequences.rows) {
-    gotSequences = await fastify.pg.query<Sequence>(
+  //If no sequences in major check degree sequences
+  if (!sequences.rows) {
+    sequences = await fastify.pg.query<Sequence>(
       `SELECT name, sequence FROM programs
       WHERE degree_id = $1`,
       [degreeId],
     );
   }
-  return gotSequences.rows;
+  return sequences.rows;
+}
+
+export async function fetchMajorExtensions(
+  fastify: FastifyWithTypeProvider,
+  majorId: number,
+  degreeId: number,
+): Promise<RetrievedEntity<Program>[]> {
+  const diplomasAndMinors = await fastify.pg.query<RetrievedEntity<Program>>(
+    `SELECT id, name, program_subtype AS "programSubtype" FROM programs
+    WHERE program_subtype = 'Diploma'
+	OR program_subtype = 'Minor'`,
+  );
+  const specializations = await fastify.pg.query<RetrievedEntity<Program>>(
+    `SELECT id, name, program_subtype AS "programSubtype" FROM programs p
+INNER JOIN major_specializations ms
+ON p.id = ms.specialization_id
+WHERE ms.major_id = $1`,
+    [majorId],
+  );
+  const options = await fastify.pg.query<RetrievedEntity<Program>>(
+    `SELECT id, name, program_subtype AS "programSubtype" FROM programs p
+INNER JOIN degree_options do
+ON p.id = do.option_id
+WHERE do.degree_id = $1`,
+    [degreeId],
+  );
+  const extensions = diplomasAndMinors.rows;
+  extensions.push(...specializations.rows);
+  extensions.push(...options.rows);
+  return extensions;
 }
