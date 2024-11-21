@@ -27,6 +27,10 @@ export async function getCoursesByTerm(
   fastify: FastifyWithTypeProvider,
   term: string,
 ) {
+  //validate term string
+  if (!/^(?:fall|winter|spring)-[0-9]{4}$/g.exec(term)) {
+    throw new Error("Invalid term to fetch courses with!");
+  }
   const termTable = term.replace("-", "_");
   const courseList = await db.fetchCourseByTerm(fastify, termTable);
   const response: Course[] = [];
