@@ -295,9 +295,9 @@ WHERE ms.major_id = $1`,
   );
   const options = await fastify.pg.query<RetrievedEntity<Program>>(
     `SELECT id, name, program_subtype AS "programSubtype" FROM programs p
-INNER JOIN degree_options do
-ON p.id = do.option_id
-WHERE do.degree_id = $1`,
+INNER JOIN degree_options deo
+ON p.id = deo.option_id
+WHERE deo.degree_id = $1`,
     [degreeId],
   );
   const extensions = diplomasAndMinors.rows;
