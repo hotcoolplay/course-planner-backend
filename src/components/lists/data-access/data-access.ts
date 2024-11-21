@@ -261,14 +261,14 @@ export async function fetchMajorSequences(
   degreeId: number,
 ): Promise<Sequence[]> {
   let sequences = await fastify.pg.query<Sequence>(
-    `SELECT name, sequence FROM programs
+    `SELECT name, sequence FROM sequences
     WHERE major_id = $1`,
     [majorId],
   );
   //If no sequences in major check degree sequences
   if (!sequences.rows) {
     sequences = await fastify.pg.query<Sequence>(
-      `SELECT name, sequence FROM programs
+      `SELECT name, sequence FROM sequences
       WHERE degree_id = $1`,
       [degreeId],
     );
