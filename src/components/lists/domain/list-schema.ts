@@ -75,6 +75,7 @@ export const selectedCourseSchema = Type.Object({
 export const courseListSchema = Type.Array(courseSchema);
 
 export const programSchema = Type.Object({
+  id: Type.Number(),
   name: Type.String(),
   programSubtype: programSubtype,
 });
@@ -102,6 +103,7 @@ export const selectedMajorSchema = Type.Composite([
     regular: Type.Boolean(),
     coop: Type.Boolean(),
     sequences: Type.Array(sequenceSchema),
+    extensions: Type.Array(programSchema),
   }),
 ]);
 
