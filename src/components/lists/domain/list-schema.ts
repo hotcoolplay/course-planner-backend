@@ -69,7 +69,7 @@ export const selectedCourseSchema = Type.Object({
   simulEnroll: Type.Boolean(),
   grading: Type.String(),
   description: Type.String(),
-  prerequisites: prerequisiteSchema,
+  prerequisites: Type.Array(prerequisiteSchema),
 });
 
 export const courseListSchema = Type.Array(courseSchema);

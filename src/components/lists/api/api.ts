@@ -18,6 +18,7 @@ async function listRoutes(fastify: FastifyWithTypeProvider) {
       },
     },
     handler: async (req, res) => {
+      fastify.log.info(`Course list was requested`);
       const result = await domain.getCourseList(fastify);
       if (!result) {
         res.status(404);
@@ -37,6 +38,9 @@ async function listRoutes(fastify: FastifyWithTypeProvider) {
       }),
     },
     handler: async (req, res) => {
+      fastify.log.info(
+        `Course with courseid ${req.params.courseid} was requested`,
+      );
       const result = await domain.getCourse(fastify, req.params.courseid);
       if (!result) {
         res.status(404);
@@ -56,6 +60,7 @@ async function listRoutes(fastify: FastifyWithTypeProvider) {
       }),
     },
     handler: async (req, res) => {
+      fastify.log.info(`Course with ID ${req.params.id} was selected`);
       const result = await domain.getSelectedCourse(fastify, req.params.id);
       if (!result) {
         res.status(404);
@@ -75,6 +80,7 @@ async function listRoutes(fastify: FastifyWithTypeProvider) {
       }),
     },
     handler: async (req, res) => {
+      fastify.log.info(`Course list for term ${req.params.term} was requested`);
       const result = await domain.getCoursesByTerm(fastify, req.params.term);
       if (!result) {
         res.status(404);
@@ -91,6 +97,7 @@ async function listRoutes(fastify: FastifyWithTypeProvider) {
       },
     },
     handler: async (req, res) => {
+      fastify.log.info(`Major list was requested`);
       const result = await domain.getMajors(fastify);
       if (!result) {
         res.status(404);
@@ -110,6 +117,7 @@ async function listRoutes(fastify: FastifyWithTypeProvider) {
       }),
     },
     handler: async (req, res) => {
+      fastify.log.info(`Major with ID ${req.params.id} was requested`);
       const result = await domain.getSelectedMajor(fastify, req.params.id);
       if (!result) {
         res.status(404);
