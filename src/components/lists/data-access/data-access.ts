@@ -18,10 +18,12 @@ export async function getPrerequisites(
 ): Promise<RetrievedEntity<Prerequisite>[]> {
   const result = await fastify.pg.query<RetrievedEntity<Prerequisite>>(
     `WITH RECURSIVE prereqs AS (
-	SELECT pe.id, pe.parent_id AS "parentId", pe.requisite_type AS "requisiteType", pe.requisite_subtype AS "requisiteSubtype" FROM prerequisites pe
+	SELECT pe.id, pe.parent_id AS "parentPrerequisiteId", pe.requisite_type AS "requisiteType", \
+  pe.course_id AS "parentCourseId", pe.requisite_subtype AS "requisiteSubtype" FROM prerequisites pe
 	WHERE pe.course_id = $1
 	UNION ALL
-	SELECT pr.id, pr.parent_id AS "parentId", pr.requisite_type AS "requisiteType", pr.requisite_subtype AS "requisiteSubtype" FROM prerequisites pr
+	SELECT pr.id, pr.parent_id AS "parentPrerequisiteId", pr.requisite_type AS "requisiteType", \
+  pr.course_id AS "parentCourseId", pr.requisite_subtype AS "requisiteSubtype" FROM prerequisites pr
 	INNER JOIN prereqs pq 
 	ON pq.id = pr.parent_id
     )
@@ -35,8 +37,8 @@ export async function joinParentPrerequisite(
   fastify: FastifyWithTypeProvider,
   prerequisiteId: number,
 ): Promise<RetrievedEntity<ParentPrerequisite>> {
-  const query = `SELECT id, parent_id AS "parentId", requisite_type AS "requisiteType", \
-  requisite_subtype AS "requisiteSubtype", amount, grade, units, \
+  const query = `SELECT id, parent_id AS "parentPrerequisiteId", requisite_type AS "requisiteType", \
+  course_id AS "parentCourseId", requisite_subtype AS "requisiteSubtype", amount, grade, units, \
   program_average AS "programAverage" FROM prerequisites
     INNER JOIN parent_prerequisites
     USING (id)
@@ -52,8 +54,8 @@ export async function joinOtherPrerequisite(
   fastify: FastifyWithTypeProvider,
   prerequisiteId: number,
 ): Promise<RetrievedEntity<OtherPrerequisite>> {
-  const query = `SELECT id, parent_id AS "parentId", requisite_type AS "requisiteType", \
-  requisite_subtype AS "requisiteSubtype", prerequisite FROM prerequisites
+  const query = `SELECT id, parent_id AS "parentPrerequisiteId", requisite_type AS "requisiteType", \
+  course_id AS "parentCourseId", requisite_subtype AS "requisiteSubtype", prerequisite FROM prerequisites
     INNER JOIN other_prerequisites
     USING (id)
     WHERE prerequisites.id = $1`;
@@ -68,7 +70,8 @@ export async function joinCoursePrerequisite(
   fastify: FastifyWithTypeProvider,
   prerequisiteId: number,
 ): Promise<RetrievedEntity<CoursePrerequisite>> {
-  const query = `SELECT pr.id, pr.parent_id AS "parentId", pr.requisite_type AS "requisiteType", \
+  const query = `SELECT pr.id, pr.parent_id AS "parentPrerequisiteId", \
+  pr.requisite_type AS "requisiteType", pr.course_id AS "parentCourseId", \
   pr.requisite_subtype AS "requisiteSubtype", cp.course_id AS "courseId" FROM prerequisites pr
     INNER JOIN course_prerequisites cp
     ON pr.id = cp.id
@@ -84,8 +87,9 @@ export async function joinProgramPrerequisite(
   fastify: FastifyWithTypeProvider,
   prerequisiteId: number,
 ): Promise<RetrievedEntity<ProgramPrerequisite>> {
-  const query = `SELECT id, parent_id AS "parentId", requisite_type AS "requisiteType", \
-  requisite_subtype AS "requisiteSubtype", program_id AS "programId" FROM prerequisites
+  const query = `SELECT id, parent_id AS "parentPrerequisiteId", requisite_type AS "requisiteType", \
+  course_id AS "parentCourseId", requisite_subtype AS "requisiteSubtype", \
+  program_id AS "programId" FROM prerequisites
     INNER JOIN program_prerequisites
     USING (id)
     WHERE prerequisites.id = $1`;
@@ -100,8 +104,9 @@ export async function joinDegreePrerequisite(
   fastify: FastifyWithTypeProvider,
   prerequisiteId: number,
 ): Promise<RetrievedEntity<DegreePrerequisite>> {
-  const query = `SELECT id, parent_id AS "parentId", requisite_type AS "requisiteType", \
-  requisite_subtype AS "requisiteSubtype", degree_id AS "degreeId" FROM prerequisites
+  const query = `SELECT id, parent_id AS "parentPrerequisiteId", requisite_type AS "requisiteType", \
+  course_id AS "parentCourseId", requisite_subtype AS "requisiteSubtype", \
+  degree_id AS "degreeId" FROM prerequisites
     INNER JOIN degree_prerequisites
     USING (id)
     WHERE prerequisites.id = $1`;
@@ -116,8 +121,8 @@ export async function joinLevelPrerequisite(
   fastify: FastifyWithTypeProvider,
   prerequisiteId: number,
 ): Promise<RetrievedEntity<LevelPrerequisite>> {
-  const query = `SELECT id, parent_id AS "parentId", requisite_type AS "requisiteType", \
-  requisite_subtype AS "requisiteSubtype", level FROM prerequisites
+  const query = `SELECT id, parent_id AS "parentPrerequisiteId", requisite_type AS "requisiteType", \
+  course_id AS "parentCourseId", requisite_subtype AS "requisiteSubtype", level FROM prerequisites
     INNER JOIN level_prerequisites
     USING (id)
     WHERE prerequisites.id = $1`;
@@ -132,10 +137,10 @@ export async function joinPseudoCoursePrerequisite(
   fastify: FastifyWithTypeProvider,
   prerequisiteId: number,
 ): Promise<RetrievedEntity<PseudoCoursePrerequisite>> {
-  const query = `SELECT id, parent_id AS "parentId", requisite_type AS "requisiteType", \
-  requisite_subtype AS "requisiteSubtype", subject, catalog_number AS "catalogNumber", \
-  min_catalog_number AS "minCatalogNumber", max_catalog_number AS "maxCatalogNumber", \
-  topic, term, component FROM prerequisites
+  const query = `SELECT id, parent_id AS "parentPrerequisiteId", requisite_type AS "requisiteType", \
+  course_id AS "parentCourseId", requisite_subtype AS "requisiteSubtype", subject, \
+  catalog_number AS "catalogNumber", min_catalog_number AS "minCatalogNumber", \
+  max_catalog_number AS "maxCatalogNumber", topic, term, component FROM prerequisites
     INNER JOIN pseudo_course_prerequisites
     USING (id)
     WHERE prerequisites.id = $1`;
@@ -149,9 +154,9 @@ export async function joinPseudoProgramPrerequisite(
   fastify: FastifyWithTypeProvider,
   prerequisiteId: number,
 ): Promise<RetrievedEntity<PseudoProgramPrerequisite>> {
-  const query = `SELECT id, parent_id AS "parentId", requisite_type AS "requisiteType", \
-  requisite_subtype AS "requisiteSubtype", faculty, major_type AS "majorType", \
-  major_system AS "majorSystem" FROM prerequisites
+  const query = `SELECT id, parent_id AS "parentPrerequisiteId", requisite_type AS "requisiteType", \
+  course_id AS "parentCourseId", requisite_subtype AS "requisiteSubtype", faculty, \
+  major_type AS "majorType", major_system AS "majorSystem" FROM prerequisites
     INNER JOIN pseudo_program_prerequisites
     USING (id)
     WHERE prerequisites.id = $1`;
@@ -165,8 +170,8 @@ export async function joinCumulativeAveragePrerequisite(
   fastify: FastifyWithTypeProvider,
   prerequisiteId: number,
 ): Promise<RetrievedEntity<CumulativeAveragePrerequisite>> {
-  const query = `SELECT id, parent_id AS "parentId", requisite_type AS "requisiteType", \
-  requisite_subtype AS "requisiteSubtype", average FROM prerequisites
+  const query = `SELECT id, parent_id AS "parentPrerequisiteId", requisite_type AS "requisiteType", \
+  course_id AS "parentCourseId", requisite_subtype AS "requisiteSubtype", average FROM prerequisites
     INNER JOIN cumulative_average_prerequisites
     USING (id)
     WHERE prerequisites.id = $1`;
@@ -180,8 +185,9 @@ export async function joinMajorAveragePrerequisite(
   fastify: FastifyWithTypeProvider,
   prerequisiteId: number,
 ): Promise<RetrievedEntity<MajorAveragePrerequisite>> {
-  const query = `SELECT id, parent_id AS "parentId", requisite_type AS "requisiteType", \
-  requisite_subtype AS "requisiteSubtype", major_average AS "majorAverage" FROM prerequisites
+  const query = `SELECT id, parent_id AS "parentPrerequisiteId", requisite_type AS "requisiteType", \
+  course_id AS "parentCourseId", requisite_subtype AS "requisiteSubtype", \
+  major_average AS "majorAverage" FROM prerequisites
     INNER JOIN major_average_prerequisites
     USING (id)
     WHERE prerequisites.id = $1`;

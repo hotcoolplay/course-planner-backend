@@ -34,12 +34,103 @@ const majorType = Type.Union([
   Type.Literal("4G"),
 ]);
 
+const majorSystem = Type.Union([
+  Type.Literal("Regular"),
+  Type.Literal("Co-operative"),
+]);
+
 const prerequisiteSchema = Type.Object({
   id: Type.Number(),
-  parentPrerequisiteSchemaId: Type.Union([Type.Number(), Type.Null()]),
+  parentPrerequisiteId: Type.Union([Type.Number(), Type.Null()]),
   requisiteType: requisiteType,
+  parentCourseId: Type.Union([Type.Number(), Type.Null()]),
   requisiteSubtype: requisiteSubtype,
 });
+
+const coursePrerequisiteSchema = Type.Object({
+  id: Type.Number(),
+  parentPrerequisiteId: Type.Union([Type.Number(), Type.Null()]),
+  requisiteType: requisiteType,
+  parentCourseId: Type.Union([Type.Number(), Type.Null()]),
+  requisiteSubtype: requisiteSubtype,
+  courseId: Type.Number(),
+});
+
+const programPrerequisiteSchema = Type.Composite([
+  prerequisiteSchema,
+  Type.Object({
+    programId: Type.Number(),
+  }),
+]);
+
+const levelPrerequisiteSchema = Type.Composite([
+  prerequisiteSchema,
+  Type.Object({
+    level: Type.String(),
+  }),
+]);
+
+const otherPrerequisiteSchema = Type.Composite([
+  prerequisiteSchema,
+  Type.Object({
+    other: Type.String(),
+  }),
+]);
+
+const pseudoCoursePrerequisiteSchema = Type.Composite([
+  prerequisiteSchema,
+  Type.Object({
+    subject: Type.Union([Type.String(), Type.Null()]),
+    catalogNumber: Type.Union([Type.String(), Type.Null()]),
+    minCatalogNumber: Type.Union([Type.Number(), Type.Null()]),
+    maxCatalogNumber: Type.Union([Type.Number(), Type.Null()]),
+    topic: Type.Union([Type.String(), Type.Null()]),
+    term: Type.Union([Type.String(), Type.Null()]),
+    component: Type.Union([Type.String(), Type.Null()]),
+  }),
+]);
+
+const cumulativeAveragePrerequisiteSchema = Type.Composite([
+  prerequisiteSchema,
+  Type.Object({
+    cumulativeAverage: Type.Number(),
+  }),
+]);
+
+const majorAveragePrerequisiteSchema = Type.Composite([
+  prerequisiteSchema,
+  Type.Object({
+    majorAverage: Type.Number(),
+  }),
+]);
+
+const pseudoProgramPrerequisiteSchema = Type.Composite([
+  prerequisiteSchema,
+  Type.Object({
+    faculty: Type.Union([Type.String(), Type.Null()]),
+    majorType: Type.Union([majorType, Type.Null()]),
+    majorSystem: Type.Union([majorSystem, Type.Null()]),
+  }),
+]);
+
+const degreePrerequisiteSchema = Type.Composite([
+  prerequisiteSchema,
+  Type.Object({
+    degreeId: Type.Number(),
+  }),
+]);
+
+const parentPrerequisiteSchema = Type.Composite([
+  prerequisiteSchema,
+  Type.Object({
+    amount: Type.Union([Type.Number(), Type.Null()]),
+    grade: Type.Union([Type.Number(), Type.Null()]),
+    units: Type.Union([Type.Number(), Type.Null()]),
+    programAverage: Type.Union([Type.Number(), Type.Null()]),
+    //Recursive call causes a max call stack size exceeded error :(
+    prerequisites: Type.Array(Type.Any()),
+  }),
+]);
 
 export const courseSchema = Type.Object({
   id: Type.Number(),
@@ -69,7 +160,20 @@ export const selectedCourseSchema = Type.Object({
   simulEnroll: Type.Boolean(),
   grading: Type.String(),
   description: Type.String(),
-  prerequisites: Type.Array(prerequisiteSchema),
+  prerequisites: Type.Array(
+    Type.Union([
+      parentPrerequisiteSchema,
+      coursePrerequisiteSchema,
+      programPrerequisiteSchema,
+      levelPrerequisiteSchema,
+      otherPrerequisiteSchema,
+      pseudoCoursePrerequisiteSchema,
+      cumulativeAveragePrerequisiteSchema,
+      majorAveragePrerequisiteSchema,
+      pseudoProgramPrerequisiteSchema,
+      degreePrerequisiteSchema,
+    ]),
+  ),
 });
 
 export const courseListSchema = Type.Array(courseSchema);

@@ -29,7 +29,7 @@ export async function attachPrerequisiteToCourse(
     } else {
       prerequisiteStructure = insertPrerequisiteIntoTree(
         prerequisiteStructure,
-        retrievedPrerequisite,
+        joinedPrerequisite,
       );
     }
   }
