@@ -1,6 +1,7 @@
 import * as db from "../data-access/data-access.js";
 import { attachPrerequisiteToCourse } from "./attach-prerequisites.js";
 import { FastifyWithTypeProvider, SelectedMajor } from "../../index.js";
+import { standardSequence } from "./standard-sequence.js";
 
 export async function getCourseList(fastify: FastifyWithTypeProvider) {
   const courseList = await db.getCourses(fastify);
@@ -63,6 +64,10 @@ export async function getSelectedMajor(
     major.id,
     major.degreeId,
   );
+
+  // Add the standard sequence if non-co-op is an option
+  if (major.regular) sequences.push(standardSequence);
+
   const extensions = await db.fetchMajorExtensions(
     fastify,
     major.id,

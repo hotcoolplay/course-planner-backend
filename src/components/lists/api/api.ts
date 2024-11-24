@@ -10,7 +10,7 @@ import * as domain from "../domain/list-retrieval.js";
 import { FastifyWithTypeProvider } from "../../index.js";
 
 async function listRoutes(fastify: FastifyWithTypeProvider) {
-  fastify.get("/courselist", {
+  fastify.get("/courses", {
     schema: {
       response: {
         200: courseListSchema,

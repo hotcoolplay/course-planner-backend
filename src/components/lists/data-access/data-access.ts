@@ -272,7 +272,7 @@ export async function fetchMajorSequences(
     [majorId],
   );
   //If no sequences in major check degree sequences
-  if (!sequences.rows) {
+  if (sequences.rows.length === 0) {
     sequences = await fastify.pg.query<Sequence>(
       `SELECT name, sequence FROM sequences
       WHERE degree_id = $1`,
