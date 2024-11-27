@@ -137,7 +137,7 @@ interface LevelPrerequisite extends Prerequisite {
 }
 
 interface OtherPrerequisite extends Prerequisite {
-  other: string;
+  prerequisite: string;
 }
 
 interface PseudoCoursePrerequisite extends Prerequisite {

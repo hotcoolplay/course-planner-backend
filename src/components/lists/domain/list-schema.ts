@@ -73,7 +73,7 @@ const levelPrerequisiteSchema = Type.Composite([
 const otherPrerequisiteSchema = Type.Composite([
   prerequisiteSchema,
   Type.Object({
-    other: Type.String(),
+    prerequisite: Type.String(),
   }),
 ]);
 
@@ -184,6 +184,12 @@ export const programSchema = Type.Object({
   programSubtype: programSubtype,
 });
 
+export const selectedProgramSchema = Type.Object({
+  id: Type.Number(),
+  name: Type.String(),
+  programSubtype: programSubtype,
+});
+
 const sequenceSchema = Type.Object({
   name: Type.Union([Type.String(), Type.Null()]),
   sequence: Type.Array(Type.String()),
@@ -199,10 +205,16 @@ export const majorSchema = Type.Composite([
   }),
 ]);
 
+const selectedDegreeSchema = Type.Object({
+  id: Type.Number(),
+  name: Type.String(),
+  faculties: Type.Array(Type.String()),
+});
+
 export const selectedMajorSchema = Type.Composite([
   programSchema,
   Type.Object({
-    degreeId: Type.Number(),
+    degree: selectedDegreeSchema,
     majorType: majorType,
     regular: Type.Boolean(),
     coop: Type.Boolean(),

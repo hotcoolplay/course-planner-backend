@@ -12,6 +12,5 @@ export const standardSequence: Sequence = {
     "Off",
     "4A",
     "4B",
-    "Off",
   ],
 };

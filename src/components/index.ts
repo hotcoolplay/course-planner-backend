@@ -19,9 +19,14 @@ export type CourseWithPrerequisites = RetrievedEntity<Course> & {
   prerequisites: RetrievedEntity<Prerequisite>[];
 };
 
-export type SelectedMajor = RetrievedEntity<Major> & {
+export type SelectedMajor = Omit<RetrievedEntity<Major>, "degreeId"> & {
+  degree: SelectedDegree;
   extensions: RetrievedEntity<Program>[];
   sequences: Sequence[];
+};
+
+export type SelectedDegree = RetrievedEntity<Degree> & {
+  faculties: string[];
 };
 
 export type RetrievedParentPrerequisite =

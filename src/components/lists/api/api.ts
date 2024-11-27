@@ -5,6 +5,7 @@ import {
   selectedCourseSchema,
   majorListSchema,
   selectedMajorSchema,
+  selectedProgramSchema,
 } from "../domain/list-schema.js";
 import * as domain from "../domain/list-retrieval.js";
 import { FastifyWithTypeProvider } from "../../index.js";
@@ -119,6 +120,26 @@ async function listRoutes(fastify: FastifyWithTypeProvider) {
     handler: async (req, res) => {
       fastify.log.info(`Major with ID ${req.params.id} was requested`);
       const result = await domain.getSelectedMajor(fastify, req.params.id);
+      if (!result) {
+        res.status(404);
+        return;
+      }
+      res.send(result);
+    },
+  });
+  fastify.get("/programs/selected-program/:id", {
+    schema: {
+      response: {
+        200: selectedProgramSchema,
+        ...commonHTTPResponses,
+      },
+      params: Type.Object({
+        id: Type.Number(),
+      }),
+    },
+    handler: async (req, res) => {
+      fastify.log.info(`Program with ID ${req.params.id} was requested`);
+      const result = await domain.getSelectedProgram(fastify, req.params.id);
       if (!result) {
         res.status(404);
         return;

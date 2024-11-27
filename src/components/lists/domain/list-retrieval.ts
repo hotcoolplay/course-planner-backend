@@ -73,10 +73,22 @@ export async function getSelectedMajor(
     major.id,
     major.degreeId,
   );
+
+  const selectedDegree = await db.fetchSelectedDegree(fastify, major.degreeId);
+
   const response: SelectedMajor = {
     ...major,
+    degree: selectedDegree,
     sequences: sequences,
     extensions: extensions,
   };
   return response;
+}
+
+export async function getSelectedProgram(
+  fastify: FastifyWithTypeProvider,
+  id: number,
+) {
+  const program = await db.fetchProgramById(fastify, id);
+  return program;
 }

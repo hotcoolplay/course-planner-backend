@@ -1,5 +1,8 @@
-import { FastifyWithTypeProvider } from "../../index.js";
-import { RetrievedEntity } from "../../index.js";
+import {
+  FastifyWithTypeProvider,
+  RetrievedEntity,
+  SelectedDegree,
+} from "../../index.js";
 
 export async function getCourses(
   fastify: FastifyWithTypeProvider,
@@ -261,6 +264,18 @@ export async function fetchMajorById(
   return gotMajor.rows[0];
 }
 
+export async function fetchProgramById(
+  fastify: FastifyWithTypeProvider,
+  id: number,
+): Promise<RetrievedEntity<Program>> {
+  const gotProgram = await fastify.pg.query<RetrievedEntity<Program>>(
+    `SELECT id, name, program_subtype AS "programSubtype" FROM programs
+    WHERE id = $1`,
+    [id],
+  );
+  return gotProgram.rows[0];
+}
+
 export async function fetchMajorSequences(
   fastify: FastifyWithTypeProvider,
   majorId: number,
@@ -310,4 +325,32 @@ WHERE deo.degree_id = $1`,
   extensions.push(...specializations.rows);
   extensions.push(...options.rows);
   return extensions;
+}
+
+export async function fetchSelectedDegree(
+  fastify: FastifyWithTypeProvider,
+  degreeId: number,
+): Promise<SelectedDegree> {
+  const degree = await fastify.pg.query<RetrievedEntity<Degree>>(
+    `SELECT id, name FROM degrees 
+    WHERE id = $1`,
+    [degreeId],
+  );
+  const facultyCodes = await fastify.pg.query<{ facultyCode: string }>(
+    `SELECT faculty_code AS "facultyCode" FROM degree_faculties
+    WHERE degree_id = $1`,
+    [degreeId],
+  );
+
+  const faculties: string[] = [];
+
+  for (const facultyCode of facultyCodes.rows) {
+    faculties.push(facultyCode.facultyCode);
+  }
+
+  const selectedDegree: SelectedDegree = {
+    ...degree.rows[0],
+    faculties: faculties,
+  };
+  return selectedDegree;
 }
