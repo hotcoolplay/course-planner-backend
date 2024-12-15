@@ -6,5 +6,7 @@
   "typescript.tsdk": ".yarn/sdks/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "eslint.nodePath": ".yarn/sdks",
-  "prettier.prettierPath": ".yarn/sdks/prettier/index.cjs"
+  "prettier.prettierPath": ".yarn/sdks/prettier/index.cjs",
+  "appService.defaultWebAppToDeploy": "/subscriptions/f1988538-794d-4403-968b-c42ed80131b8/resourceGroups/appsvc_linux_centralus_basic/providers/Microsoft.Web/sites/courseplanner-server",
+  "appService.deploySubpath": "."
 }
