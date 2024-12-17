@@ -23,10 +23,13 @@ server.register(envs).after(async function (err) {
 
 server.setErrorHandler(errorHandling.apiErrorHandler);
 
-server.listen({ port: Number(process.env.PORT) }, (err, address: string) => {
-  if (err) {
-    server.log.error(err);
-    process.exit(1);
-  }
-  server.log.info(`Server listening at ${address}`);
-});
+server.listen(
+  { host: process.env.HOST || "localhost", port: Number(process.env.PORT) },
+  (err, address: string) => {
+    if (err) {
+      server.log.error(err);
+      process.exit(1);
+    }
+    server.log.info(`Server listening at ${address}`);
+  },
+);
