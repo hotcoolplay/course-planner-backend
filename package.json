@@ -57,6 +57,6 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "nodemon --env-file=.env build/server.js",
-    "start": "node --env-file=.env src/server.js"
+    "start": "node src/server.js"
   }
 }
