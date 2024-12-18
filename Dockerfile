@@ -13,7 +13,7 @@ WORKDIR /app
 ENV NODE_ENV="production"
 ARG YARN_VERSION=4.5.3
 RUN corepack enable && \
-    yarn set version 4.5.3
+    yarn set version $YARN_VERSION
 
 
 # Throw-away build stage to reduce size of final image
