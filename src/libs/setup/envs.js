@@ -6,10 +6,10 @@ const setupOptions = {
         required: [
             "HOST",
             "PORT",
-            "DB_ID",
-            "DB_PWD",
-            "DB_HOST",
-            "DB_NAME",
+            "DB_PGUSER",
+            "DB_PGPASSWORD",
+            "DB_PGHOST",
+            "DB_PGDATABASE",
             "GOOGLE_CLIENT_ID",
             "GOOGLE_CLIENT_SECRET",
             "FRONTEND_URL",
@@ -22,16 +22,16 @@ const setupOptions = {
             PORT: {
                 type: "string",
             },
-            DB_ID: {
+            DB_PGUSER: {
                 type: "string",
             },
-            DB_PWD: {
+            DB_PGPASSWORD: {
                 type: "string",
             },
-            DB_HOST: {
+            DB_PGHOST: {
                 type: "string",
             },
-            DB_NAME: {
+            DB_PGDATABSE: {
                 type: "string",
             },
             GOOGLE_CLIENT_ID: {
