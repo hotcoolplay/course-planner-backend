@@ -3,10 +3,10 @@ import fp from "fastify-plugin";
 import { fastifyPostgres } from "@fastify/postgres";
 
 async function dbConnector(fastify: FastifyInstance) {
-  const dbUser = encodeURIComponent(process.env.DB_ID || "");
-  const dbPassword = encodeURIComponent(process.env.DB_PWD || "");
-  const dbHost = encodeURIComponent(process.env.DB_HOST || "");
-  const dbName = encodeURIComponent(process.env.DB_NAME || "");
+  const dbUser = encodeURIComponent(process.env.DB_PGUSER || "");
+  const dbPassword = encodeURIComponent(process.env.DB_PGPASSWORD || "");
+  const dbHost = encodeURIComponent(process.env.DB_PGHOST || "");
+  const dbName = encodeURIComponent(process.env.DB_PGDATABASE || "");
   fastify.register(fastifyPostgres, {
     connectionString: `postgres://${dbUser}:${dbPassword}@${dbHost}/${dbName}`,
   });

@@ -24,16 +24,16 @@ const setupOptions = {
       PORT: {
         type: "string",
       },
-      DB_ID: {
+      DB_PGUSER: {
         type: "string",
       },
-      DB_PWD: {
+      DB_PGPASSWORD: {
         type: "string",
       },
-      DB_HOST: {
+      DB_PGHOST: {
         type: "string",
       },
-      DB_NAME: {
+      DB_PGDATABSE: {
         type: "string",
       },
       GOOGLE_CLIENT_ID: {
