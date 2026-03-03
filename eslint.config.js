@@ -11,4 +11,14 @@ export default [
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
   pluginSecurity.configs.recommended,
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          caughtErrors: "none",
+        },
+      ],
+    },
+  },
 ];

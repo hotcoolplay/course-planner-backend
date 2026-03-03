@@ -1,16 +1,27 @@
-import * as db from "../data-access/data-access.js";
+import * as db from "../data-access/course-db.js";
+import { FastifyWithTypeProvider } from "../../index.js";
+
 import {
-  FastifyWithTypeProvider,
-  RetrievedParentPrerequisite,
-  RetrievedEntity,
-  CourseWithPrerequisites,
-} from "../../index.js";
+  CourseDTO,
+  PrerequisiteDTO,
+  ParentPrerequisiteDTO,
+  RequisiteSubtype,
+  OtherPrerequisiteDTO,
+  LevelPrerequisiteDTO,
+  CoursePrerequisiteDTO,
+  ProgramPrerequisiteDTO,
+  DegreePrerequisiteDTO,
+  PseudoCoursePrerequisiteDTO,
+  PseudoProgramPrerequisiteDTO,
+  CumulativeAveragePrerequisiteDTO,
+  MajorAveragePrerequisiteDTO,
+} from "./course-schema.js";
 
 export async function attachPrerequisiteToCourse(
   fastify: FastifyWithTypeProvider,
   id: number,
-) {
-  let prerequisiteStructure: RetrievedEntity<Prerequisite>[] = [];
+): Promise<CourseWithPrerequisites> {
+  let prerequisiteStructure: PrerequisiteDTO[] = [];
   const retrievedPrerequisites = await db.getPrerequisites(fastify, id);
   for (const retrievedPrerequisite of retrievedPrerequisites) {
     const joinedPrerequisite = await retrieveJoinedPrerequisites(
@@ -20,7 +31,7 @@ export async function attachPrerequisiteToCourse(
     );
     if (joinedPrerequisite.parentCourseId) {
       if ("amount" in joinedPrerequisite) {
-        const retrievedParentPrerequisite: RetrievedParentPrerequisite = {
+        const retrievedParentPrerequisite: ParentPrerequisiteDTO = {
           ...joinedPrerequisite,
           prerequisites: [],
         };
@@ -34,7 +45,9 @@ export async function attachPrerequisiteToCourse(
     }
   }
   const retrievedCourse = await db.fetchCourseById(fastify, id);
-  const courseWithPrerequisites: CourseWithPrerequisites = {
+  const courseWithPrerequisites: CourseDTO & {
+    prerequisites: PrerequisiteDTO[];
+  } = {
     ...retrievedCourse,
     prerequisites: prerequisiteStructure,
   };
@@ -42,9 +55,9 @@ export async function attachPrerequisiteToCourse(
 }
 
 function insertPrerequisiteIntoTree(
-  prerequisites: RetrievedEntity<Prerequisite>[],
-  prerequisite: RetrievedEntity<Prerequisite>,
-) {
+  prerequisites: PrerequisiteDTO[],
+  prerequisite: PrerequisiteDTO,
+): PrerequisiteDTO[] {
   for (const retrievedPrerequisite of prerequisites) {
     if (
       "prerequisites" in retrievedPrerequisite &&
@@ -68,9 +81,9 @@ function insertPrerequisiteIntoTree(
 
 async function retrieveJoinedPrerequisites(
   fastify: FastifyWithTypeProvider,
-  type: requisiteSubtype,
+  type: RequisiteSubtype,
   id: number,
-) {
+): Promise<PrerequisiteUnion> {
   switch (type) {
     case "parent":
       return await db.joinParentPrerequisite(fastify, id);
@@ -94,3 +107,19 @@ async function retrieveJoinedPrerequisites(
       return await db.joinMajorAveragePrerequisite(fastify, id);
   }
 }
+
+export type CourseWithPrerequisites = CourseDTO & {
+  prerequisites: PrerequisiteDTO[];
+};
+
+export type PrerequisiteUnion =
+  | ParentPrerequisiteDTO
+  | OtherPrerequisiteDTO
+  | CoursePrerequisiteDTO
+  | ProgramPrerequisiteDTO
+  | DegreePrerequisiteDTO
+  | LevelPrerequisiteDTO
+  | PseudoCoursePrerequisiteDTO
+  | PseudoProgramPrerequisiteDTO
+  | CumulativeAveragePrerequisiteDTO
+  | MajorAveragePrerequisiteDTO;

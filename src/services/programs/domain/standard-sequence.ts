@@ -1,4 +1,6 @@
-export const standardSequence: Sequence = {
+import { SequenceDTO } from "./program-schema.js";
+
+export const standardSequence: SequenceDTO = {
   name: "Standard",
   sequence: [
     "1A",

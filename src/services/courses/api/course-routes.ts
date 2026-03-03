@@ -3,14 +3,11 @@ import {
   courseListSchema,
   courseSchema,
   selectedCourseSchema,
-  majorListSchema,
-  selectedMajorSchema,
-  selectedProgramSchema,
-} from "../domain/list-schema.js";
-import * as domain from "../domain/list-retrieval.js";
-import { FastifyWithTypeProvider } from "../../index.js";
+} from "../domain/course-schema.js";
+import * as domain from "../domain/retrieve-courses.js";
+import { FastifyWithTypeProvider, commonHTTPResponses } from "../../index.js";
 
-async function listRoutes(fastify: FastifyWithTypeProvider) {
+async function courseRoutes(fastify: FastifyWithTypeProvider) {
   fastify.get("/courses", {
     schema: {
       response: {
@@ -18,6 +15,7 @@ async function listRoutes(fastify: FastifyWithTypeProvider) {
         ...commonHTTPResponses,
       },
     },
+    onRequest: [fastify.authenticate],
     handler: async (req, res) => {
       fastify.log.info(`Course list was requested`);
       const result = await domain.getCourseList(fastify);
@@ -38,6 +36,7 @@ async function listRoutes(fastify: FastifyWithTypeProvider) {
         courseid: Type.String(),
       }),
     },
+    onRequest: [fastify.authenticate],
     handler: async (req, res) => {
       fastify.log.info(
         `Course with courseid ${req.params.courseid} was requested`,
@@ -60,6 +59,7 @@ async function listRoutes(fastify: FastifyWithTypeProvider) {
         id: Type.Number(),
       }),
     },
+    onRequest: [fastify.authenticate],
     handler: async (req, res) => {
       fastify.log.info(`Course with ID ${req.params.id} was selected`);
       const result = await domain.getSelectedCourse(fastify, req.params.id);
@@ -80,6 +80,7 @@ async function listRoutes(fastify: FastifyWithTypeProvider) {
         term: Type.String(),
       }),
     },
+    onRequest: [fastify.authenticate],
     handler: async (req, res) => {
       fastify.log.info(`Course list for term ${req.params.term} was requested`);
       const result = await domain.getCoursesByTerm(fastify, req.params.term);
@@ -90,74 +91,6 @@ async function listRoutes(fastify: FastifyWithTypeProvider) {
       res.send(result);
     },
   });
-  fastify.get("/majors", {
-    schema: {
-      response: {
-        200: majorListSchema,
-        ...commonHTTPResponses,
-      },
-    },
-    handler: async (req, res) => {
-      fastify.log.info(`Major list was requested`);
-      const result = await domain.getMajors(fastify);
-      if (!result) {
-        res.status(404);
-        return;
-      }
-      res.send(result);
-    },
-  });
-  fastify.get("/majors/selected-major/:id", {
-    schema: {
-      response: {
-        200: selectedMajorSchema,
-        ...commonHTTPResponses,
-      },
-      params: Type.Object({
-        id: Type.Number(),
-      }),
-    },
-    handler: async (req, res) => {
-      fastify.log.info(`Major with ID ${req.params.id} was requested`);
-      const result = await domain.getSelectedMajor(fastify, req.params.id);
-      if (!result) {
-        res.status(404);
-        return;
-      }
-      res.send(result);
-    },
-  });
-  fastify.get("/programs/selected-program/:id", {
-    schema: {
-      response: {
-        200: selectedProgramSchema,
-        ...commonHTTPResponses,
-      },
-      params: Type.Object({
-        id: Type.Number(),
-      }),
-    },
-    handler: async (req, res) => {
-      fastify.log.info(`Program with ID ${req.params.id} was requested`);
-      const result = await domain.getSelectedProgram(fastify, req.params.id);
-      if (!result) {
-        res.status(404);
-        return;
-      }
-      res.send(result);
-    },
-  });
 }
 
-export default listRoutes;
-
-const commonHTTPResponses = {
-  400: {
-    description: "Bad request, please check your request body",
-    type: "null",
-  },
-  500: {
-    description: "Internal server error, please try again later",
-    type: "null",
-  },
-};
+export default courseRoutes;

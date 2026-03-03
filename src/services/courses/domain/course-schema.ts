@@ -1,4 +1,4 @@
-import { Type } from "@sinclair/typebox";
+import { Static, Type } from "@sinclair/typebox";
 
 const requisiteType = Type.Union([
   Type.Literal("antireq"),
@@ -17,14 +17,6 @@ const requisiteSubtype = Type.Union([
   Type.Literal("degree"),
   Type.Literal("cumulativeAverage"),
   Type.Literal("majorAverage"),
-]);
-
-const programSubtype = Type.Union([
-  Type.Literal("Diploma"),
-  Type.Literal("Major"),
-  Type.Literal("Minor"),
-  Type.Literal("Option"),
-  Type.Literal("Specialization"),
 ]);
 
 const majorType = Type.Union([
@@ -178,49 +170,36 @@ export const selectedCourseSchema = Type.Object({
 
 export const courseListSchema = Type.Array(courseSchema);
 
-export const programSchema = Type.Object({
-  id: Type.Number(),
-  name: Type.String(),
-  programSubtype: programSubtype,
-});
+export type CourseDTO = Static<typeof courseSchema>;
 
-export const selectedProgramSchema = Type.Object({
-  id: Type.Number(),
-  name: Type.String(),
-  programSubtype: programSubtype,
-});
+export type PrerequisiteDTO = Static<typeof prerequisiteSchema>;
 
-const sequenceSchema = Type.Object({
-  name: Type.Union([Type.String(), Type.Null()]),
-  sequence: Type.Array(Type.String()),
-});
+export type ParentPrerequisiteDTO = Static<typeof parentPrerequisiteSchema>;
 
-export const majorSchema = Type.Composite([
-  programSchema,
-  Type.Object({
-    degreeId: Type.Number(),
-    majorType: majorType,
-    regular: Type.Boolean(),
-    coop: Type.Boolean(),
-  }),
-]);
+export type OtherPrerequisiteDTO = Static<typeof otherPrerequisiteSchema>;
 
-const selectedDegreeSchema = Type.Object({
-  id: Type.Number(),
-  name: Type.String(),
-  faculties: Type.Array(Type.String()),
-});
+export type CoursePrerequisiteDTO = Static<typeof coursePrerequisiteSchema>;
 
-export const selectedMajorSchema = Type.Composite([
-  programSchema,
-  Type.Object({
-    degree: selectedDegreeSchema,
-    majorType: majorType,
-    regular: Type.Boolean(),
-    coop: Type.Boolean(),
-    sequences: Type.Array(sequenceSchema),
-    extensions: Type.Array(programSchema),
-  }),
-]);
+export type ProgramPrerequisiteDTO = Static<typeof programPrerequisiteSchema>;
 
-export const majorListSchema = Type.Array(majorSchema);
+export type LevelPrerequisiteDTO = Static<typeof levelPrerequisiteSchema>;
+
+export type PseudoCoursePrerequisiteDTO = Static<
+  typeof pseudoCoursePrerequisiteSchema
+>;
+
+export type CumulativeAveragePrerequisiteDTO = Static<
+  typeof cumulativeAveragePrerequisiteSchema
+>;
+
+export type MajorAveragePrerequisiteDTO = Static<
+  typeof majorAveragePrerequisiteSchema
+>;
+
+export type PseudoProgramPrerequisiteDTO = Static<
+  typeof pseudoProgramPrerequisiteSchema
+>;
+
+export type DegreePrerequisiteDTO = Static<typeof degreePrerequisiteSchema>;
+
+export type RequisiteSubtype = Static<typeof requisiteSubtype>;
