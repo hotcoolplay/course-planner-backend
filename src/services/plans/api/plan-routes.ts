@@ -98,8 +98,8 @@ async function planRoutes(fastify: FastifyWithTypeProvider) {
       if (!authorized) {
         res.status(404);
       }
-      await domain.deletePlan(fastify, req.params.id);
-      res.status(204).send();
+      const planId = await domain.deletePlan(fastify, req.params.id);
+      res.status(204).send(planId);
     },
   });
   fastify.put("/update-plan/", {
